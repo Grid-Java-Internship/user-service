@@ -16,7 +16,7 @@ This is an overview of the project with a high-level diagram that explains the a
 1. Clone the repository:
     ```bash
     git clone https://github.com/Grid-Java-Internship/user-service
-    cd reservation-service
+    cd user-service
     ```
 
 2. Install dependencies and build the application:
