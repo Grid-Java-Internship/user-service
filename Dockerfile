@@ -1,5 +1,5 @@
 # multistage build
-FROM maven:3.8-openjdk-17 as build
+FROM maven:3.8-openjdk-17 AS build
 
 # wordkir of container
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY . .
 RUN mvn clean && mvn install -DskipTests
 
 # lightweight image for runtime
-FROM openjdk:17-alpine as runtime
+FROM eclipse-temurin:17-jdk-alpine AS runtime
 
 RUN addgroup --system --gid 1001 spring && \
     adduser --system --uid 1001 spring && \
