@@ -4,6 +4,13 @@ spring:
       on-profile: "prod"
   application:
     name: "${SPRING_APP_NAME:reservation-service}"
+  datasource:
+    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_service}"
+    username: "${DB_USER:postgres}"
+    password: "${DB_PASSWORD:postgres}"
+  jpa:
+      hibernate:
+        ddl-auto: update
 
 logging:
   pattern:
