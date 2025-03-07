@@ -37,10 +37,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse addProfilePicture(Long userId, MultipartFile file) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         if(file == null || file.isEmpty()) {
-            throw new UserNotFoundException("Profile picture is missing!");
+            throw new PictureNotFoundException("Profile picture is missing!");
         }
 
         String fileName = "pictureUserId_" + userId + ".jpg";
@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
         UserResponse userResponse = userMapper.toUserResponse(user);
         userResponse.setProfilePicturePath(FilePath.PATH_PICTURE_URL + user.getProfilePicturePath());
         return userResponse;
