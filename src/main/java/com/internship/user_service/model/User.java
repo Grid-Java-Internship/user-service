@@ -5,13 +5,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -22,7 +22,6 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull
@@ -31,24 +30,38 @@ public class User {
 
     @NotNull
     @Column(nullable = false)
-    private String lastname;
+    private String surname;
 
     @NotNull
     @Email
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotNull
     @Past
+    @Column(nullable = false)
     private LocalDate birthday;
 
+    @NotNull
+    @Column(nullable = false)
     private String phone;
 
+    @NotNull
+    @Column(nullable = false)
     private String address;
 
     @CreationTimestamp
+    @Column(nullable = false)
     private LocalDate created;
 
+    @NotNull
+    @Column(nullable = false)
     private Boolean verified;
+
+
+    private LocalTime startTime;
+
+    private LocalTime endTime;
 
     private String profilePicturePath;
 

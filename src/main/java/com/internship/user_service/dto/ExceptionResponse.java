@@ -1,4 +1,4 @@
-package com.internship.user_service.exception;
+package com.internship.user_service.dto;
 
 import lombok.Builder;
 import lombok.Data;

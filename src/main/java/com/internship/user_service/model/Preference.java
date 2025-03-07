@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.util.List;
 
 @NoArgsConstructor
+@EqualsAndHashCode
 @Getter
 @Setter
 @Entity
@@ -16,9 +17,6 @@ import java.util.List;
 public class Preference {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @JoinColumn
     @OneToOne(fetch = FetchType.LAZY)
     private User user;
