@@ -2,17 +2,46 @@ package com.internship.user_service.service;
 
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.exception.PictureNotFoundException;
+import com.internship.user_service.exception.UserNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface UserService {
 
+    /**
+     * Creates a new user based on the given {@link UserDTO}.
+     *
+     * @param userDTO The user to be created.
+     * @return The created user.
+     */
     UserResponse createUser(UserDTO userDTO);
 
+    /**
+     * Adds a profile picture for the user with the specified ID.
+     *
+     * @param id The ID of the user for whom the profile picture is to be added.
+     * @param file The MultipartFile containing the profile picture to be uploaded.
+     * @return A UserResponse containing the updated user information with the new profile picture path.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     * @throws PictureNotFoundException if the file is empty or not a valid image type.
+     */
     UserResponse addProfilePicture(Long id, MultipartFile file);
 
+    /**
+     * Returns the user with the specified ID.
+     *
+     * @param id The ID of the user to be retrieved.
+     * @return The user with the specified ID.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     */
     UserResponse getUser(Long id);
 
+    /**
+     * Retrieves all users from the repository.
+     *
+     * @return A list of UserResponse objects representing all users.
+     */
     List<UserResponse> getAllUsers();
 }
