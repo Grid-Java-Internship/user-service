@@ -14,7 +14,7 @@ public class ExceptionResponse {
 
     private Integer statusCode;
 
-    private static final Boolean success = false;
+    private final Boolean success = false;
 
     private List<String> messages;
 

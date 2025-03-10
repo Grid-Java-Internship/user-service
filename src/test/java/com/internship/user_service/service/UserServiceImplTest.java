@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,12 +42,6 @@ class UserServiceImplTest {
     private User user;
     private UserDTO userDTO;
     private UserResponse userResponse;
-
-    @Mock
-    private MockMultipartFile mockIOExceptionFile;
-
-    @Mock
-    private MockMultipartFile mockFile;
 
     @BeforeEach
     void setUp() {
@@ -72,6 +66,8 @@ class UserServiceImplTest {
 
     @Test
     void createUser() {
+        user.setStatus(Status.ACTIVE);
+        user.setVerified(false);
         when(userMapper.toUserEntity(userDTO)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
@@ -142,6 +138,17 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findAll();
         verify(userMapper, times(1)).toUserResponse(user);
     }
+    @Test
+    void getAllUsersWhenEmptyList() {
+        when(userRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<UserResponse> users = userService.getAllUsers();
+
+        assertNotNull(users);
+        assertEquals(0, users.size());
+
+        verify(userRepository, times(1)).findAll();
+    }
 
     @Test
     void addProfilePictureWhenUserNotFound() {
@@ -175,6 +182,7 @@ class UserServiceImplTest {
 
     @Test
     void addProfilePictureWhenIOException() throws IOException{
+        MultipartFile mockIOExceptionFile = mock(MultipartFile.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doThrow(new IOException()).when(mockIOExceptionFile).transferTo(any(File.class));
 
@@ -190,9 +198,12 @@ class UserServiceImplTest {
 
     @Test
     void addProfilePictureWhenSuccessful() throws IOException {
+        MultipartFile mockFile = mock(MultipartFile.class);
+        userResponse.setProfilePicturePath("pictureUserId_1.jpg");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+        doNothing().when(mockFile).transferTo(any(File.class));
 
         UserResponse result = userService.addProfilePicture(1L, mockFile);
 
@@ -201,7 +212,12 @@ class UserServiceImplTest {
         assertEquals("Marko", result.getName());
         assertEquals("Markovic", result.getSurname());
         assertEquals("marko@internship.com", result.getEmail());
-        assertEquals("pictureUserId_" + 1L + ".jpg", user.getProfilePicturePath());
+        assertEquals("pictureUserId_1.jpg", result.getProfilePicturePath());
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User capturedUser = userCaptor.getValue();
+        assertEquals("pictureUserId_1.jpg", capturedUser.getProfilePicturePath());
 
         verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).save(user);

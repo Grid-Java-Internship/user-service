@@ -15,6 +15,17 @@ import java.util.List;
 @ControllerAdvice
 public class UserExceptionHandler {
 
+    private static ResponseEntity<ExceptionResponse> handleUserDefinedException(Exception ex) {
+        String errorMessage = ex.getMessage();
+
+        ExceptionResponse errorResponse = ExceptionResponse.builder()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .messages(List.of(errorMessage))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ExceptionResponse> handleConstraintViolationException(ConstraintViolationException ex) {
         List<String> errorMessages = ex.getConstraintViolations().stream()
@@ -51,4 +62,15 @@ public class UserExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ExceptionResponse> handleUserNotFoundException(UserNotFoundException ex) {
+        return handleUserDefinedException(ex);
+    }
+
+    @ExceptionHandler(PictureNotFoundException.class)
+    public ResponseEntity<ExceptionResponse> handlePictureNotFoundException(PictureNotFoundException ex) {
+        return handleUserDefinedException(ex);
+    }
+
 }

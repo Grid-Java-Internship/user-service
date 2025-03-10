@@ -23,7 +23,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
     private final String uploadDir = System.getProperty("user.dir") + FilePath.PATH;
 
     @Override
@@ -36,7 +35,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse addProfilePicture(Long userId, MultipartFile file) {
-        User user = userRepository.findById(userId)
+        User user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         if(file == null || file.isEmpty()) {
@@ -55,13 +55,13 @@ public class UserServiceImpl implements UserService {
 
         user.setProfilePicturePath(fileName);
         User savedUser = userRepository.save(user);
-
         return userMapper.toUserResponse(savedUser);
     }
 
     @Override
     public UserResponse getUser(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
         UserResponse userResponse = userMapper.toUserResponse(user);
         userResponse.setProfilePicturePath(FilePath.PATH_PICTURE_URL + user.getProfilePicturePath());
@@ -72,7 +72,9 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> getAllUsers() {
         return userRepository
                 .findAll()
-                .stream().map(userMapper::toUserResponse).toList();
+                .stream()
+                .map(userMapper::toUserResponse)
+                .toList();
     }
 
 }

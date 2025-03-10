@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/addProfilePicture")
-    public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestPart("file") MultipartFile file) {
         UserResponse userResponse = userService.addProfilePicture(id, file);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
