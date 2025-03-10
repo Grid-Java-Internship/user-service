@@ -184,6 +184,7 @@ class UserServiceImplTest {
     void addProfilePictureWhenIOException() throws IOException{
         MultipartFile mockIOExceptionFile = mock(MultipartFile.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(mockIOExceptionFile.getOriginalFilename()).thenReturn("valid-image.jpg");
         doThrow(new IOException()).when(mockIOExceptionFile).transferTo(any(File.class));
 
         PictureNotFoundException exception = assertThrows(PictureNotFoundException.class,
@@ -194,7 +195,34 @@ class UserServiceImplTest {
         verify(userRepository, never()).save(any());
         verify(userMapper, never()).toUserResponse(any());
         verify(mockIOExceptionFile, times(1)).transferTo(any(File.class));
+        verify(mockIOExceptionFile, times(1)).getOriginalFilename();
+
     }
+
+    @Test
+    void addProfilePictureWhenInvalidFileExtensionOrNull() {
+        MultipartFile mockInvalidFileExtension = mock(MultipartFile.class);
+        MultipartFile mockNullFile = mock(MultipartFile.class);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(mockInvalidFileExtension.getOriginalFilename()).thenReturn("invalid-image.pdf");
+        when(mockNullFile.getOriginalFilename()).thenReturn(null);
+
+        PictureNotFoundException firstException = assertThrows(PictureNotFoundException.class,
+                () -> userService.addProfilePicture(1L, mockInvalidFileExtension));
+        assertEquals("Invalid file type!", firstException.getMessage());
+
+        PictureNotFoundException secondException = assertThrows(PictureNotFoundException.class,
+                () -> userService.addProfilePicture(1L, mockNullFile));
+        assertEquals("Invalid file type!", secondException.getMessage());
+
+        verify(userRepository, times(2)).findById(1L);
+        verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toUserResponse(any());
+        verify(mockInvalidFileExtension, times(1)).getOriginalFilename();
+        verify(mockNullFile, times(1)).getOriginalFilename();
+    }
+
+
 
     @Test
     void addProfilePictureWhenSuccessful() throws IOException {
@@ -203,6 +231,7 @@ class UserServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+        when(mockFile.getOriginalFilename()).thenReturn("valid-image.jpg");
         doNothing().when(mockFile).transferTo(any(File.class));
 
         UserResponse result = userService.addProfilePicture(1L, mockFile);
@@ -223,6 +252,8 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).save(user);
         verify(userMapper, times(1)).toUserResponse(user);
         verify(mockFile, times(1)).transferTo(any(File.class));
+        verify(mockFile, times(1)).getOriginalFilename();
+
     }
 
 }

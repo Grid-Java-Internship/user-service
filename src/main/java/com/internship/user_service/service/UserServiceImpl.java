@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
+
 @RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
@@ -24,6 +26,15 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final String uploadDir = System.getProperty("user.dir") + FilePath.PATH;
+
+    private String getFileExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+    }
+
+    boolean isValidImageExtension(String fileName) {
+        String extension = getFileExtension(fileName);
+        return ALLOWED_EXTENSIONS.contains(extension);
+    }
 
     @Override
     public UserResponse createUser(UserDTO userDTO) {
@@ -43,7 +54,13 @@ public class UserServiceImpl implements UserService {
             throw new PictureNotFoundException("Profile picture is missing!");
         }
 
-        String fileName = "pictureUserId_" + userId + ".jpg";
+        String originalFilename = file.getOriginalFilename();
+
+        if (originalFilename == null || !isValidImageExtension(originalFilename)) {
+            throw new PictureNotFoundException("Invalid file type!");
+        }
+
+        String fileName = "pictureUserId_" + userId + "." + getFileExtension(originalFilename);
         Path filePath = Paths.get(uploadDir).resolve(fileName);
 
         try {
