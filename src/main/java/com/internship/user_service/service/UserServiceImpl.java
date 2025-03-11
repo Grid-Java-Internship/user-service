@@ -2,6 +2,7 @@ package com.internship.user_service.service;
 
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.exception.PictureNotFoundException;
+import com.internship.user_service.exception.UserAlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.User;
@@ -38,6 +39,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserDTO userDTO) {
+        if(userRepository.existsById(userDTO.getId())) {
+            throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
+        }
         userDTO.setStatus(Status.ACTIVE);
         userDTO.setVerified(false);
         User user = userRepository.save(userMapper.toUserEntity(userDTO));

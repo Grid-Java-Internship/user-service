@@ -13,6 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserResponse {
 
+    @NotNull
     private Long id;
 
     @NotBlank(message = "Name is mandatory.")

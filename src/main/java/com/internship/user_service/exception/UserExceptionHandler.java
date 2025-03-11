@@ -22,9 +22,10 @@ public class UserExceptionHandler {
         ExceptionResponse errorResponse = ExceptionResponse.builder()
                 .statusCode(httpStatus.value())
                 .messages(List.of(errorMessage))
+                .success(false)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(httpStatus.value()).body(errorResponse);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -37,6 +38,7 @@ public class UserExceptionHandler {
         ExceptionResponse errorResponse = ExceptionResponse.builder()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .messages(errorMessages)
+                .success(false)
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
@@ -50,6 +52,7 @@ public class UserExceptionHandler {
         ExceptionResponse errorResponse = ExceptionResponse.builder()
                 .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .messages(List.of(errorMessage))
+                .success(false)
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
@@ -64,6 +67,7 @@ public class UserExceptionHandler {
         ExceptionResponse errorResponse = ExceptionResponse.builder()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .messages(errorMessages)
+                .success(false)
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
@@ -78,6 +82,12 @@ public class UserExceptionHandler {
     public ResponseEntity<ExceptionResponse> handlePictureNotFoundException(PictureNotFoundException ex) {
         log.error("PictureNotFoundException occurred: {}", ex.getMessage());
         return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ExceptionResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        log.error("UserAlreadyExistsException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.CONFLICT);
     }
 
 }

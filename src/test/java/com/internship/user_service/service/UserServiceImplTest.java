@@ -4,6 +4,7 @@ import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.PictureNotFoundException;
+import com.internship.user_service.exception.UserAlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.User;
@@ -89,6 +90,18 @@ class UserServiceImplTest {
         verify(userMapper, times(1)).toUserEntity(userDTO);
         verify(userRepository, times(1)).save(user);
         verify(userMapper, times(1)).toUserResponse(user);
+    }
+
+    @Test
+    void createUserWhenUserAlreadyExists() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(userDTO));
+        assertEquals("User with id 1 already exists.", exception.getMessage());
+
+        verify(userRepository, times(1)).existsById(1L);
+        verify(userMapper, never()).toUserEntity(any());
+        verify(userRepository, never()).save(any());
+        verify(userMapper, never()).toUserResponse(any());
     }
 
     @Test
