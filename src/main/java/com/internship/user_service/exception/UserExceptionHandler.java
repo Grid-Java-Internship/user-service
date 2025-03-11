@@ -17,10 +17,10 @@ import java.util.List;
 @ControllerAdvice
 public class UserExceptionHandler {
 
-    private static ResponseEntity<ExceptionResponse> handleUserDefinedException(Exception ex) {
+    private static ResponseEntity<ExceptionResponse> handleUserDefinedException(Exception ex, HttpStatus httpStatus) {
         String errorMessage = ex.getMessage();
         ExceptionResponse errorResponse = ExceptionResponse.builder()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .statusCode(httpStatus.value())
                 .messages(List.of(errorMessage))
                 .build();
 
@@ -71,13 +71,13 @@ public class UserExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ExceptionResponse> handleUserNotFoundException(UserNotFoundException ex) {
         log.error("UserNotFoundException occurred: {}", ex.getMessage());
-        return handleUserDefinedException(ex);
+        return handleUserDefinedException(ex, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(PictureNotFoundException.class)
     public ResponseEntity<ExceptionResponse> handlePictureNotFoundException(PictureNotFoundException ex) {
         log.error("PictureNotFoundException occurred: {}", ex.getMessage());
-        return handleUserDefinedException(ex);
+        return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
     }
 
 }
