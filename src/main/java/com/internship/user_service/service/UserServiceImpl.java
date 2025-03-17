@@ -11,6 +11,7 @@ import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.repository.UserRepository;
 import com.internship.user_service.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.List;
 import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -40,11 +42,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse createUser(UserDTO userDTO) {
         if(userRepository.existsById(userDTO.getId())) {
+            log.error("User with id {} already exists.", userDTO.getId());
             throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
         }
         userDTO.setStatus(Status.ACTIVE);
         userDTO.setVerified(false);
         User user = userRepository.save(userMapper.toUserEntity(userDTO));
+        log.info("User with id {} created successfully.", user.getId());
         return userMapper.toUserResponse(user);
     }
 
@@ -52,15 +56,20 @@ public class UserServiceImpl implements UserService {
     public UserResponse addProfilePicture(Long userId, MultipartFile file) {
         User user = userRepository
                 .findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found."));
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found.", userId);
+                    return new UserNotFoundException("User not found.");
+                });
 
         if(file == null || file.isEmpty()) {
+            log.error("Profile picture is missing!");
             throw new PictureNotFoundException("Profile picture is missing!");
         }
 
         String originalFilename = file.getOriginalFilename();
 
         if (originalFilename == null || !isValidImageExtension(originalFilename)) {
+            log.error("Invalid file type!");
             throw new PictureNotFoundException("Invalid file type!");
         }
 
@@ -71,11 +80,13 @@ public class UserServiceImpl implements UserService {
             file.transferTo(filePath.toFile());
         }
         catch (IOException e) {
+            log.error("IO Exception occurred while uploading profile picture!");
             throw new PictureNotFoundException("IO Exception occurred while uploading profile picture!");
         }
 
         user.setProfilePicturePath(fileName);
         User savedUser = userRepository.save(user);
+        log.info("Profile picture added for user with id {}.", userId);
         return userMapper.toUserResponse(savedUser);
     }
 
@@ -83,19 +94,25 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUser(Long userId) {
         User user = userRepository
                 .findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found."));
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found.", userId);
+                    return new UserNotFoundException("User not found.");
+                });
         UserResponse userResponse = userMapper.toUserResponse(user);
         userResponse.setProfilePicturePath(FilePath.PATH_PICTURE_URL + user.getProfilePicturePath());
+        log.info("Retrieved user with id {}.", userId);
         return userResponse;
     }
 
     @Override
     public List<UserResponse> getAllUsers() {
-        return userRepository
+        List<UserResponse> users = userRepository
                 .findAll()
                 .stream()
                 .map(userMapper::toUserResponse)
                 .toList();
+        log.info("Retrieved all users. Total count: {}.", users.size());
+        return users;
     }
 
 }

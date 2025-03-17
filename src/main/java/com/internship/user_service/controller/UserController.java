@@ -5,17 +5,14 @@ import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@Slf4j
 @RequestMapping("/v1/users")
 public class UserController {
 
@@ -29,7 +26,6 @@ public class UserController {
     @PostMapping("/createUser")
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserDTO userDTO) {
         UserResponse userResponse = userService.createUser(userDTO);
-        log.info("User with id {} created", userResponse.getId());
         return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
     }
 
@@ -42,7 +38,6 @@ public class UserController {
     @PatchMapping("/{id}/addProfilePicture")
     public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestPart("file") MultipartFile file) {
         UserResponse userResponse = userService.addProfilePicture(id, file);
-        log.info("Added profile picture for user with id {}", id);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
@@ -54,7 +49,6 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
         UserResponse userResponse = userService.getUser(id);
-        log.info("Retrieved user with id {}", id);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
@@ -65,7 +59,6 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
-        log.info("Retrieved all users");
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
