@@ -5,8 +5,8 @@ spring:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
     url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_service}"
-    username: "${DB_USER:postgres}"
-    password: "${DB_PASSWORD:postgres}"
+    username: "${DB_USER}"
+    password: "${DB_PASS}"
   jpa:
     hibernate:
       ddl-auto: update
