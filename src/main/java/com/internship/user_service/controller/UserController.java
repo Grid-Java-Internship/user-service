@@ -62,4 +62,14 @@ public class UserController {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
+    /**
+     * Deletes the user with the given {@code id}.
+     * @param id The id of the user
+     * @return {@code true} if the user was deleted, {@code false} if the user was not found
+     */
+    @DeleteMapping("/deleteUser/{id}")
+    public ResponseEntity<Boolean> deleteUser(@PathVariable Long id) {
+        Boolean isDeleted = userService.undoUserCreation(id);
+        return new ResponseEntity<>(isDeleted, HttpStatus.OK);
+    }
 }

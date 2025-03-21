@@ -44,4 +44,13 @@ public interface UserService {
      * @return A list of UserResponse objects representing all users.
      */
     List<UserResponse> getAllUsers();
+
+    /**
+     * Undo the creation of the user with the given ID.
+     *
+     * @param id The ID of the user to be deleted.
+     * @return {@code true} if the user has been deleted, or {@code false} if the user
+     * with the given ID does not exist.
+     */
+    Boolean undoUserCreation(Long id);
 }
