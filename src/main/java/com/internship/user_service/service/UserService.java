@@ -1,9 +1,11 @@
 package com.internship.user_service.service;
 
+import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.PictureNotFoundException;
 import com.internship.user_service.exception.UserNotFoundException;
+import com.internship.user_service.model.Availability;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -44,6 +46,10 @@ public interface UserService {
      * @return A list of UserResponse objects representing all users.
      */
     List<UserResponse> getAllUsers();
+
+    List<Availability> getAvailabilityForTheUser(Long userId);
+
+    void addAvailabilityToTheUser(AvailabilityDTO availabilityDTO);
 
     /**
      * Undo the creation of the user with the given ID.

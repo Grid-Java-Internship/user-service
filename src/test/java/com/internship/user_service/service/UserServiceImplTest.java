@@ -1,13 +1,15 @@
 package com.internship.user_service.service;
 
 import com.internship.user_service.constants.FilePath;
+import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
-import com.internship.user_service.exception.PictureNotFoundException;
-import com.internship.user_service.exception.UserAlreadyExistsException;
-import com.internship.user_service.exception.UserNotFoundException;
+import com.internship.user_service.exception.*;
+import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.mapper.UserMapper;
+import com.internship.user_service.model.Availability;
 import com.internship.user_service.model.User;
+import com.internship.user_service.repository.AvailabilityRepository;
 import com.internship.user_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,13 +40,19 @@ class UserServiceImplTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private AvailabilityRepository availabilityRepository;
+
+    @Mock
+    private AvailabilityMapper availabilityMapper;
+
     @InjectMocks
     private UserServiceImpl userService;
 
     private User user;
     private UserDTO userDTO;
     private UserResponse userResponse;
-
+    private AvailabilityDTO availabilityDTO;
     @BeforeEach
     void setUp() {
         user = new User();
@@ -63,6 +72,11 @@ class UserServiceImplTest {
         userResponse.setName("Marko");
         userResponse.setSurname("Markovic");
         userResponse.setEmail("marko@internship.com");
+
+        availabilityDTO = new AvailabilityDTO();
+        availabilityDTO.setWorkerId(1L);
+        availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 8, 0));
+        availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
     }
 
     @Test
@@ -261,6 +275,53 @@ class UserServiceImplTest {
         verify(mockFile, times(1)).transferTo(any(File.class));
         verify(mockFile, times(1)).getOriginalFilename();
 
+    }
+
+    @Test
+    void gettingUsersAvailabilitiesUserNotFound(){
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.getAvailabilityForTheUser(anyLong()));
+    }
+
+    @Test
+    void throwExceptionWhenUserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void throwExceptionWhenStartTimeAfterEndTime() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 14, 0));
+        availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
+
+        assertThrows(InvalidTimeFormatException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void throwExceptionWhenUserIsBusy() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        Availability existingAvailability = new Availability();
+        existingAvailability.setStartTime(LocalDateTime.of(2025, 3, 25, 7, 0));
+        existingAvailability.setEndTime(LocalDateTime.of(2025, 3, 25, 13, 0));
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(availabilityRepository.findAllByUserId(1L)).thenReturn(List.of(existingAvailability));
+
+        assertThrows(UserUnavailableException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void shouldSaveAvailabilitySuccessfully() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(availabilityRepository.findAllByUserId(1L)).thenReturn(List.of());
+        Availability availability = new Availability();
+        when(availabilityMapper.toEntity(availabilityDTO)).thenReturn(availability);
+
+        assertDoesNotThrow(() -> userService.addAvailabilityToTheUser(availabilityDTO));
+        verify(availabilityRepository, times(1)).save(availability);
     }
 
     @Test

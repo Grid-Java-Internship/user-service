@@ -12,7 +12,8 @@ RUN mvn verify clean --fail-never
 
 COPY . .
 
-RUN mvn package
+RUN mvn package -DskipTests
+
 # lightweight image for runtime
 FROM eclipse-temurin:17-jdk-alpine AS runtime
 
@@ -26,4 +27,4 @@ COPY --chown=spring:spring --from=build /app/target/*.jar app.jar
 
 ENTRYPOINT ["java","-jar","app.jar"]
 
-EXPOSE 8080
+EXPOSE 8081

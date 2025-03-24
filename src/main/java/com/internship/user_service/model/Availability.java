@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
+// TODO Zauzetost se pamti u bazi
+// TODO Znaci samo kada se izvrsi rezervacija onda se puni tabela availabilities
+
 @NoArgsConstructor
 @Getter
 @Setter

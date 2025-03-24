@@ -4,7 +4,7 @@ spring:
   application:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
-    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_service}"
+    url: "jdbc:${DB_TYPE}://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:user_service}"
     username: "${DB_USER}"
     password: "${DB_PASS}"
   jpa:
@@ -20,7 +20,7 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
 
   config:
-    import: file:env.properties
+    import: classpath:env.properties
 logging:
   pattern:
     console: "${LOG_PATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
