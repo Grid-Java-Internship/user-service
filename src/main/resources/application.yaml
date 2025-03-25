@@ -4,7 +4,7 @@ spring:
   application:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
-    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_service}"
+    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:user_service}"
     username: "${DB_USER:postgres}"
     password: "${DB_PASSWORD:postgres}"
   jpa:
@@ -14,6 +14,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 logging:
   pattern:
@@ -26,3 +30,8 @@ management:
         include: "*"
 server:
   port: 8081
+
+configs:
+  rabbitmq:
+    queues:
+      deleteUser: "deletePendingUserQueue"

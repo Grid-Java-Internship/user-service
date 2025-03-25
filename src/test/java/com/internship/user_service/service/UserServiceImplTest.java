@@ -269,4 +269,29 @@ class UserServiceImplTest {
 
     }
 
+    @Test
+    void undoUserCreation_shouldReturnTrue_whenUserExists() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        doNothing().when(userRepository).delete(user);
+
+        boolean result = userService.undoUserCreation(1L);
+
+        assertTrue(result);
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).delete(user);
+    }
+
+    @Test
+    void undoUserCreation_shouldThrowException_whenUserDoesNotExist() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
+                () -> userService.undoUserCreation(1L)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User not found.", exception.getMessage());
+    }
 }

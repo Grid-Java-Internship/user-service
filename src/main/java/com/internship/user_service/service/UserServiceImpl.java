@@ -115,4 +115,14 @@ public class UserServiceImpl implements UserService {
         return users;
     }
 
+    @Override
+    public Boolean undoUserCreation(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() ->
+            new UserNotFoundException("User not found.")
+        );
+
+        userRepository.delete(user);
+        return true;
+    }
+
 }

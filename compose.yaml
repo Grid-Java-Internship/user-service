@@ -1,0 +1,16 @@
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    container_name: user-service
+    networks:
+      - global-network
+
+networks:
+  global-network:
+    name: global-network
+    external: true
+    driver: bridge

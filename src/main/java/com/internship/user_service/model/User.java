@@ -5,9 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -15,10 +13,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-@Entity
+@Data
+@Builder
 @NoArgsConstructor
-@Getter
-@Setter
+@AllArgsConstructor
+@Entity
 @Table(name = "users")
 public class User {
 

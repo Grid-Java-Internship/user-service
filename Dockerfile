@@ -5,11 +5,14 @@ FROM maven:3.8-openjdk-17 AS build
 WORKDIR /app
 
 # copy all project files to container
-COPY . .
+COPY pom.xml .
 
 # run maven
-RUN mvn clean && mvn install -DskipTests
+RUN mvn verify clean --fail-never
 
+COPY . .
+
+RUN mvn package -DskipTests
 # lightweight image for runtime
 FROM eclipse-temurin:17-jdk-alpine AS runtime
 
