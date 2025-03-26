@@ -133,9 +133,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public List<Availability> getAvailabilityForTheUser(Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-        if(user.isEmpty())
-            throw new UserNotFoundException("User with this id "+ userId + "was not found!");
+
+        userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User with this id " + userId + "was not found!"));
 
         return availabilityRepository.findAllByUserId(userId);
     }
@@ -143,16 +142,17 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void addAvailabilityToTheUser(AvailabilityDTO availabilityDTO) {
-        Optional<User> user = userRepository.findById(availabilityDTO.getWorkerId());
+        Optional<User> user = Optional.ofNullable(userRepository.findById(availabilityDTO.getWorkerId()).orElseThrow(() -> new UserNotFoundException("User not found.")));
 
-        if(user.isEmpty()){
-            log.error("User with id {} not found.", availabilityDTO.getWorkerId());
-            throw new UserNotFoundException("User not found.");
-        }
         if(availabilityDTO.getStartTime().isAfter(availabilityDTO.getEndTime())){
             log.error("Start time must be before end time.");
             throw new InvalidTimeFormatException("Start time must be before end time.");
         }
+
+        if(user.isEmpty()){
+            log.error("User with id {} not found.", availabilityDTO.getWorkerId());
+        }
+
 
         List<Availability> availabilities = availabilityRepository.findAllByUserId(availabilityDTO.getWorkerId());
 
