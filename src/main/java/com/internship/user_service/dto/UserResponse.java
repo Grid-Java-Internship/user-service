@@ -1,6 +1,5 @@
 package com.internship.user_service.dto;
 
-
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,6 +36,18 @@ public class UserResponse {
     @NotBlank(message = "Address is mandatory.")
     @Size(min = 2, max = 30, message = "Address length must be between {min} and {max} characters.")
     private String address;
+
+    @NotBlank(message = "City is mandatory.")
+    @Size(min = 2, max = 30, message = "City length must be between {min} and {max} characters.")
+    private String city;
+
+    @NotBlank(message = "Zip code is mandatory.")
+    @Size(min = 2, max = 30, message = "Zip code length must be between {min} and {max} characters.")
+    private String zipCode;
+
+    @NotBlank(message = "Country is mandatory.")
+    @Size(min = 2, max = 30, message = "Country length must be between {min} and {max} characters.")
+    private String country;
 
     private String profilePicturePath;
 

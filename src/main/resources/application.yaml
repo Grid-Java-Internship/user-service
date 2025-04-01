@@ -4,9 +4,9 @@ spring:
   application:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
-    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:user_service}"
-    username: "${DB_USER:postgres}"
-    password: "${DB_PASSWORD:postgres}"
+    url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:user_service_1}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:mikser1234567890}
   jpa:
     hibernate:
       ddl-auto: update
