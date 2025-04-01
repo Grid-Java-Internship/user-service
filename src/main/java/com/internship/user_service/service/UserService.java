@@ -53,4 +53,6 @@ public interface UserService {
      * with the given ID does not exist.
      */
     Boolean undoUserCreation(Long id);
+
+    UserResponse editUser(UserDTO userDTO);
 }
