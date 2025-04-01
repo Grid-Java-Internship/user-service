@@ -1,0 +1,34 @@
+package com.internship.user_service.controller;
+
+import com.internship.user_service.dto.FavoriteResponse;
+import com.internship.user_service.service.FavoriteService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/v1/favorites")
+@RequiredArgsConstructor
+public class FavoriteController {
+    private final FavoriteService favoriteService;
+
+    /**
+     * Adds a favorite user to the user with the given {@code userId}.
+     *
+     * @param userId         The id of the user
+     * @param favoriteUserId The id of the user to add as a favorite
+     * @return {@code true} if the user was added as a favorite, {@code false} otherwise
+     */
+    @PostMapping("/{userId}/{favoriteUserId}")
+    public ResponseEntity<FavoriteResponse> addFavorite(@PathVariable Long userId,
+                                                        @PathVariable Long favoriteUserId) {
+        return ResponseEntity.ok(favoriteService.addFavorite(userId, favoriteUserId));
+    }
+
+    @DeleteMapping("/{userId}/{favoriteUserId}")
+    public ResponseEntity<Void> deleteFavorite(@PathVariable Long userId,
+                                               @PathVariable Long favoriteUserId) {
+        favoriteService.deleteFavorite(userId, favoriteUserId);
+        return ResponseEntity.noContent().build();
+    }
+}

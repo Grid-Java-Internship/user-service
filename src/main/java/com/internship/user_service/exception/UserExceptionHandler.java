@@ -46,7 +46,7 @@ public class UserExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleException(Exception ex) {
         String errorMessage = "Request failed because of an internal problem. " +
-                "Please contact support or your administrator. Error: " + ex.getMessage();
+                              "Please contact support or your administrator. Error: " + ex.getMessage();
         log.error("Internal server error occurred: {}", errorMessage);
 
         ExceptionResponse errorResponse = ExceptionResponse.builder()
@@ -88,6 +88,12 @@ public class UserExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         log.error("UserAlreadyExistsException occurred: {}", ex.getMessage());
         return handleUserDefinedException(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ExceptionResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.error("IllegalArgumentException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
     }
 
 }
