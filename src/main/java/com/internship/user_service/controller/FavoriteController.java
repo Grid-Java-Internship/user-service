@@ -25,6 +25,14 @@ public class FavoriteController {
         return ResponseEntity.ok(favoriteService.addFavorite(userId, favoriteUserId));
     }
 
+    /**
+     * Deletes a favorite user from the user with the given {@code userId}.
+     *
+     * @param userId         The id of the user
+     * @param favoriteUserId The id of the user to delete as a favorite
+     * @return A 204 NO CONTENT response if the favorite was deleted, a 400 BAD REQUEST with an
+     * error message if the favorite relationship does not exist
+     */
     @DeleteMapping("/{userId}/{favoriteUserId}")
     public ResponseEntity<Void> deleteFavorite(@PathVariable Long userId,
                                                @PathVariable Long favoriteUserId) {
