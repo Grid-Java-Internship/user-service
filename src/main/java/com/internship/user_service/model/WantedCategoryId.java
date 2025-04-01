@@ -2,6 +2,9 @@ package com.internship.user_service.model;
 
 import com.internship.user_service.enums.JobCategory;
 import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.*;
 
 import java.io.Serializable;
