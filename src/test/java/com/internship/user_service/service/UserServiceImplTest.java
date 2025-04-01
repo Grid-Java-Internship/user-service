@@ -8,7 +8,6 @@ import com.internship.user_service.exception.UserAlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.User;
-import com.internship.user_service.model.enums.Status;
 import com.internship.user_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,8 +67,6 @@ class UserServiceImplTest {
 
     @Test
     void createUser() {
-        user.setStatus(Status.ACTIVE);
-        user.setVerified(false);
         when(userMapper.toUserEntity(userDTO)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
@@ -84,10 +81,6 @@ class UserServiceImplTest {
 
         ArgumentCaptor<UserDTO> userDTOCaptor = ArgumentCaptor.forClass(UserDTO.class);
         verify(userMapper).toUserEntity(userDTOCaptor.capture());
-        UserDTO capturedUserDTO = userDTOCaptor.getValue();
-        assertEquals(Status.ACTIVE, capturedUserDTO.getStatus());
-        assertFalse(capturedUserDTO.getVerified());
-
         verify(userMapper, times(1)).toUserEntity(userDTO);
         verify(userRepository, times(1)).save(user);
         verify(userMapper, times(1)).toUserResponse(user);

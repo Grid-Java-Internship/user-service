@@ -6,7 +6,6 @@ import com.internship.user_service.exception.UserAlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.User;
-import com.internship.user_service.model.enums.Status;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.repository.UserRepository;
 import com.internship.user_service.dto.UserResponse;
@@ -46,8 +45,7 @@ public class UserServiceImpl implements UserService {
             log.error("User with id {} already exists.", userDTO.getId());
             throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
         }
-        userDTO.setStatus(Status.ACTIVE);
-        userDTO.setVerified(false);
+
         User user = userRepository.save(userMapper.toUserEntity(userDTO));
         log.info("User with id {} created successfully.", user.getId());
         return userMapper.toUserResponse(user);

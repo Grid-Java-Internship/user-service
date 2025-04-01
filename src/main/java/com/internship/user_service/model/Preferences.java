@@ -1,30 +1,31 @@
 package com.internship.user_service.model;
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
+@Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode
-@Getter
-@Setter
 @Entity
 @Table(name = "preferences")
-public class Preference {
+public class Preferences {
 
     @Id
-    @JoinColumn
-    @OneToOne(fetch = FetchType.LAZY)
+    private Long id;
+
+    @MapsId
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "id")
     private User user;
 
     private Double preferredDistance;
 
     private Integer preferredExperience;
 
-    @OneToMany(mappedBy = "preference")
+    @OneToMany(mappedBy = "preferences", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WantedCategory> wantedCategories;
 }
