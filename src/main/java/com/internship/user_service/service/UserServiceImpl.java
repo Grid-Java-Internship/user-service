@@ -9,6 +9,7 @@ import com.internship.user_service.model.User;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.repository.UserRepository;
 import com.internship.user_service.dto.UserResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class UserServiceImpl implements UserService {
             log.error("User with id {} already exists.", userDTO.getId());
             throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
         }
+
         User user = userRepository.save(userMapper.toUserEntity(userDTO));
         log.info("User with id {} created successfully.", user.getId());
         return userMapper.toUserResponse(user);
@@ -120,6 +122,34 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user);
         return true;
+    }
+
+    @Override
+    @Transactional
+    public UserResponse editUser(UserDTO userDTO) {
+
+        if (userDTO.getId() == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+
+        User user = userRepository
+                .findById(userDTO.getId())
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found.", userDTO.getId());
+                    return new UserNotFoundException("User not found.");
+                });
+
+        user.setName(userDTO.getName());
+        user.setSurname(userDTO.getSurname());
+        user.setBirthday(userDTO.getBirthday());
+        user.setAddress(userDTO.getAddress());
+        user.setPhone(userDTO.getPhone());
+        user.setCountry(userDTO.getCountry());
+        user.setCity(userDTO.getCity());
+        user.setZipCode(userDTO.getZipCode());
+
+        log.info("User with id {} updated successfully.", user.getId());
+        return userMapper.toUserResponse(user);
     }
 
 }

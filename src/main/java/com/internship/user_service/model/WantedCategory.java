@@ -1,13 +1,12 @@
 package com.internship.user_service.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+@Data
+@Builder
 @NoArgsConstructor
-@Getter
-@Setter
+@AllArgsConstructor
 @Entity
 @Table(name = "wanted_categories")
 public class WantedCategory {
@@ -16,8 +15,8 @@ public class WantedCategory {
     private WantedCategoryId wantedCategoryId;
 
     @ManyToOne
-    @MapsId("preferenceId")
-    @JoinColumn(name = "preference_id")
-    private Preference preference;
+    @MapsId("preferencesId")
+    @JoinColumn(name = "preferences_id", insertable = false, updatable = false)
+    private Preferences preferences;
 
 }

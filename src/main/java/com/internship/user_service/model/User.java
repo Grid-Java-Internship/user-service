@@ -49,6 +49,18 @@ public class User {
     @Column(nullable = false)
     private String address;
 
+    @NotNull
+    @Column(nullable = false)
+    private String city;
+
+    @NotNull
+    @Column(nullable = false)
+    private String zipCode;
+
+    @NotNull
+    @Column(nullable = false)
+    private String country;
+
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime created;

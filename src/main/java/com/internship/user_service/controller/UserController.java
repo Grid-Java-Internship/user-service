@@ -72,4 +72,10 @@ public class UserController {
         Boolean isDeleted = userService.undoUserCreation(id);
         return new ResponseEntity<>(isDeleted, HttpStatus.OK);
     }
+
+    @PatchMapping("/editUser")
+    public ResponseEntity<UserResponse> editUser(@RequestBody @Valid UserDTO userDTO) {
+        UserResponse userResponse = userService.editUser(userDTO);
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
+    }
 }
