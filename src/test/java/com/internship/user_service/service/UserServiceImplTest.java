@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -286,5 +287,74 @@ class UserServiceImplTest {
 
         assertNotNull(exception);
         assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void updateUser_shouldUpdateUser_whenUserExists() {
+
+        userDTO.setId(1L);
+        userDTO.setName("Stefan");
+        userDTO.setSurname("Stefanovic");
+        userDTO.setBirthday(LocalDate.of(1990, 1, 1));
+        userDTO.setAddress("Address1");
+        userDTO.setPhone("123456789");
+        userDTO.setCountry("Macedonia");
+        userDTO.setCity("Warsaw");
+        userDTO.setZipCode("12345");
+
+
+        userResponse.setId(1L);
+        userResponse.setName("Stefan");
+        userResponse.setSurname("Stefanovic");
+        userResponse.setAddress("Address1");
+        userResponse.setPhone("123456789");
+        userResponse.setCountry("Macedonia");
+        userResponse.setCity("Warsaw");
+        userResponse.setZipCode("12345");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+
+        UserResponse result = userService.editUser(userDTO);
+
+        assertNotNull(result);
+        assertEquals(1, user.getId());
+        assertEquals("Stefan", user.getName());
+        assertEquals("Stefanovic", user.getSurname());
+        assertEquals("Address1", user.getAddress());
+        assertEquals("123456789", user.getPhone());
+        assertEquals("Macedonia", user.getCountry());
+        assertEquals("Warsaw", user.getCity());
+        assertEquals("12345", user.getZipCode());
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userMapper, times(1)).toUserResponse(user);
+    }
+
+    @Test
+    void updateUser_shouldThrowException_whenUserDoesNotExist() {
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
+                () -> userService.editUser(userDTO)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void updateUser_shouldThrowIllegalArgumentException_whenUserDTOHasIdNull() {
+
+        userDTO.setId(null);
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.editUser(userDTO)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User ID cannot be null", exception.getMessage());
     }
 }
