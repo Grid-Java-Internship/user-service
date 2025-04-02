@@ -28,6 +28,8 @@ public class FavoriteServiceImpl implements FavoriteService {
         User user = userService.getUserToService(userId);
         User favoriteUser = userService.getUserToService(favoriteUserId);
 
+        // TODO: Check if user blocked the favoriteUser
+
         // Check if favorite already exists
         if (favoriteExists(userId, favoriteUserId)) {
             log.error("Favorite with userId {} and favoriteUserId {} already exists.", userId, favoriteUserId);
