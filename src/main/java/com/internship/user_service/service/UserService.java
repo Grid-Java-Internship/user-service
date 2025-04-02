@@ -4,6 +4,7 @@ import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.PictureNotFoundException;
 import com.internship.user_service.exception.UserNotFoundException;
+import com.internship.user_service.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -53,4 +54,15 @@ public interface UserService {
      * with the given ID does not exist.
      */
     Boolean undoUserCreation(Long id);
+
+    /**
+     * Fetches the user from the repository by its ID.
+     * <p>
+     * This method is used for internal service use only and should not be used from the outside.
+     *
+     * @param userId The ID of the user to be fetched.
+     * @return The user with the specified ID.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     */
+    User getUserToService(Long userId);
 }

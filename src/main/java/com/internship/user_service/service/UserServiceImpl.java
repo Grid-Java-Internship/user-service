@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserDTO userDTO) {
-        if(userRepository.existsById(userDTO.getId())) {
+        if (userRepository.existsById(userDTO.getId())) {
             log.error("User with id {} already exists.", userDTO.getId());
             throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
         }
@@ -61,7 +62,7 @@ public class UserServiceImpl implements UserService {
                     return new UserNotFoundException("User not found.");
                 });
 
-        if(file == null || file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             log.error("Profile picture is missing!");
             throw new PictureNotFoundException("Profile picture is missing!");
         }
@@ -78,8 +79,7 @@ public class UserServiceImpl implements UserService {
 
         try {
             file.transferTo(filePath.toFile());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("IO Exception occurred while uploading profile picture!");
             throw new PictureNotFoundException("IO Exception occurred while uploading profile picture!");
         }
@@ -118,11 +118,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean undoUserCreation(Long id) {
         User user = userRepository.findById(id).orElseThrow(() ->
-            new UserNotFoundException("User not found.")
+                new UserNotFoundException("User not found.")
         );
 
         userRepository.delete(user);
         return true;
     }
 
+    @Override
+    public User getUserToService(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> {
+            log.error("User with id {} not found.", userId);
+            return new UserNotFoundException("User not found.");
+        });
+    }
 }
