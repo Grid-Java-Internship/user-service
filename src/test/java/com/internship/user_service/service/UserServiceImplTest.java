@@ -95,6 +95,8 @@ class UserServiceImplTest {
 
         ArgumentCaptor<UserDTO> userDTOCaptor = ArgumentCaptor.forClass(UserDTO.class);
         verify(userMapper).toUserEntity(userDTOCaptor.capture());
+        UserDTO capturedUserDTO = userDTOCaptor.getValue();
+
         verify(userMapper, times(1)).toUserEntity(userDTO);
         verify(userRepository, times(1)).save(user);
         verify(userMapper, times(1)).toUserResponse(user);
