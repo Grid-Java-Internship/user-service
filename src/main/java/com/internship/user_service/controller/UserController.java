@@ -1,7 +1,9 @@
 package com.internship.user_service.controller;
 
+import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.model.Availability;
 import com.internship.user_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +62,29 @@ public class UserController {
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    /**
+     * Returns all availabilities for the user with given {@code id}.
+     * @param userId The id of the user
+     * @return A list of all availabilities for the user with given {@code id}
+     */
+    @GetMapping("/available/{id}")
+    public ResponseEntity<List<Availability>> getAvailabilityForTheUser(@PathVariable("id") Long userId){
+        return ResponseEntity.ok().body(userService.getAvailabilityForTheUser(userId));
+    }
+
+    /**
+     * Adds availability for the user based on the given {@link AvailabilityDTO}.
+     *
+     * @param availabilityDTO The availability data to be added for the user.
+     * @return A ResponseEntity with HTTP status OK if the availability is added successfully.
+     */
+    @PostMapping("/available")
+    public ResponseEntity<Void> addAvailability(@RequestBody @Valid AvailabilityDTO availabilityDTO){
+        userService.addAvailabilityToTheUser(availabilityDTO);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

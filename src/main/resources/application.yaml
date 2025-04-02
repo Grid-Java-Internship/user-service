@@ -4,9 +4,9 @@ spring:
   application:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
-    url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:user_service_1}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:mikser1234567890}
+    url: "jdbc:${DB_TYPE}://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:user_service}"
+    username: "${DB_USER}"
+    password: "${DB_PASS}"
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,6 +19,8 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+  config:
+    import: classpath:env.properties
 logging:
   pattern:
     console: "${LOG_PATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
