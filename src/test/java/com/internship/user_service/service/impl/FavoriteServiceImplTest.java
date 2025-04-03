@@ -1,9 +1,11 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
+import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.FavoriteMapper;
+import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
@@ -19,6 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -32,6 +36,9 @@ class FavoriteServiceImplTest {
     private FavoriteMapper favoriteMapper;
 
     @Mock
+    private UserMapper userMapper;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -42,6 +49,7 @@ class FavoriteServiceImplTest {
 
     private User user;
     private User favoriteUser;
+    private UserResponse userResponse;
     private FavoriteId favoriteId;
     private Favorite favorite;
     private FavoriteResponse favoriteResponse;
@@ -49,7 +57,6 @@ class FavoriteServiceImplTest {
     private static final Long USER_ID = 1L;
     private static final Long FAVORITE_USER_ID = 2L;
     private static final Long NON_EXISTENT_USER_ID = 99L;
-
 
     @BeforeEach
     void setUp() {
@@ -65,6 +72,12 @@ class FavoriteServiceImplTest {
                 .surname("User")
                 .build();
 
+        userResponse = UserResponse.builder()
+                .id(FAVORITE_USER_ID)
+                .name("Favorite")
+                .surname("User")
+                .build();
+
         favoriteId = new FavoriteId(USER_ID, FAVORITE_USER_ID);
 
         favorite = new Favorite(favoriteId, user, favoriteUser);
@@ -72,6 +85,72 @@ class FavoriteServiceImplTest {
         favoriteResponse = FavoriteResponse.builder()
                 .id(favoriteId)
                 .build();
+    }
+
+    @Nested
+    @DisplayName("getFavoriteUsers Tests")
+    class GetFavoriteUsersTests {
+        @Test
+        @DisplayName("Should get favorite users successfully")
+        void getFavoriteUsers_success() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(favoriteRepository.findByUser(user)).thenReturn(List.of(favorite));
+            when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+
+            // Act
+            List<UserResponse> result = favoriteService.getFavoriteUsers(USER_ID);
+
+            // Assert
+            assertThat(result)
+                    .isNotNull()
+                    .hasSize(1)
+                    .contains(userResponse);
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verify(favoriteRepository).findByUser(user);
+            verify(userMapper).toUserResponse(any(User.class));
+            verifyNoMoreInteractions(userService, favoriteRepository, userMapper);
+        }
+
+        @Test
+        @DisplayName("Should throw UserNotFoundException when user does not exist")
+        void getFavoriteUsers_userNotFound() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
+
+            // Act & Assert
+            assertThatThrownBy(() -> favoriteService.getFavoriteUsers(USER_ID))
+                    .isInstanceOf(UserNotFoundException.class)
+                    .hasMessage("User not found.");
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verifyNoMoreInteractions(userService);
+            verifyNoInteractions(favoriteRepository, userMapper);
+        }
+
+        @Test
+        @DisplayName("Should return empty list when user has no favorite users")
+        void getFavoriteUsers_noFavoriteUsers() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(favoriteRepository.findByUser(user)).thenReturn(List.of());
+
+            // Act
+            List<UserResponse> result = favoriteService.getFavoriteUsers(USER_ID);
+
+            // Assert
+            assertThat(result).isEmpty();
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verify(favoriteRepository).findByUser(user);
+            verifyNoMoreInteractions(userService, favoriteRepository);
+            verifyNoInteractions(userMapper);
+        }
     }
 
     @Nested
