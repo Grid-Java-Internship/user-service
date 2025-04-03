@@ -33,10 +33,12 @@ public interface FavoriteService {
     boolean favoriteExists(Long userId, Long favoriteUserId);
 
     /**
-     * Returns a list of all favorite users of the user with the given {@code userId}.
+     * Retrieves the list of favorite users for the given {@code userId}.
      *
-     * @param userId The ID of the user whose favorite users are to be retrieved.
-     * @return A list of the favorite users of the user with the given {@code userId}.
+     * @param userId     The ID of the user whose favorite users are to be retrieved.
+     * @param page The page number to retrieve.
+     * @param pageSize   The page size to retrieve.
+     * @return A list of {@link UserResponse} objects representing the favorite users.
      */
-    List<UserResponse> getFavoriteUsers(Long userId);
+    List<UserResponse> getFavoriteUsers(Long userId, int page, int pageSize);
 }

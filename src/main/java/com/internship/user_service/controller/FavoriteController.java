@@ -22,8 +22,11 @@ public class FavoriteController {
      * @return A {@link ResponseEntity} containing a list of {@link UserResponse} objects representing the favorite users.
      */
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getFavoriteUsers(@RequestParam Long userId) {
-        return ResponseEntity.ok(favoriteService.getFavoriteUsers(userId));
+    public ResponseEntity<List<UserResponse>> getFavoriteUsers(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(favoriteService.getFavoriteUsers(userId, page, pageSize));
     }
 
     /**

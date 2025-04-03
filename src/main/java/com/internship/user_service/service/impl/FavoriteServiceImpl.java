@@ -14,6 +14,9 @@ import com.internship.user_service.service.FavoriteService;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,23 +33,21 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final BlockService blockService;
 
     @Override
-    public List<UserResponse> getFavoriteUsers(Long userId) {
+    public List<UserResponse> getFavoriteUsers(Long userId, int page, int pageSize) {
         // Retrieve the user if it exists
         User user = userService.getUserEntity(userId);
 
         // Retrieve favorite users
-        List<User> favoriteUsers = favoriteRepository.findByUser(user).stream()
-                .map(Favorite::getFavoriteUser)
-                .toList();
+        List<User> favoriteUsers = getFavoriteUsersPage(user, page, pageSize).getContent();
 
-        // If no favorite users, return empty list
+        // If there are no favorite users, return empty list
         if (favoriteUsers.isEmpty()) {
             log.info("User with userId {} has no favorite users.", userId);
-            return List.of();
+        } else {
+            log.info("Retrieved favorite users for user with userId {}.", userId);
         }
 
         // Map favorite users to user responses and return
-        log.info("Retrieved favorite users for user with userId {}.", userId);
         return favoriteUsers.stream()
                 .map(userMapper::toUserResponse)
                 .toList();
@@ -125,5 +126,26 @@ public class FavoriteServiceImpl implements FavoriteService {
             log.error("Invalid userId {} or favoriteUserId {}.", userId, favoriteUserId);
             throw new IllegalArgumentException("Invalid userId or favoriteUserId.");
         }
+    }
+
+    /**
+     * Retrieves a page of users who are favorites of the given {@code user}.
+     * <p>
+     * The page size is determined by the given {@code pageSize}, and the page number
+     * is determined by the given {@code page}.
+     * <p>
+     * The returned page contains the favorite users mapped from the page of
+     * {@link Favorite} objects returned by the repository.
+     *
+     * @param user     The user whose favorite users are to be retrieved.
+     * @param page     The page number.
+     * @param pageSize The page size.
+     * @return A page of favorite users.
+     */
+    private Page<User> getFavoriteUsersPage(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return favoriteRepository
+                .findByUser(user, pageable)
+                .map(Favorite::getFavoriteUser);
     }
 }
