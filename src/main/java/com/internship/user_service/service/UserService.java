@@ -64,5 +64,5 @@ public interface UserService {
      * @return The user with the specified ID.
      * @throws UserNotFoundException if the user with the specified ID does not exist.
      */
-    User getUserToService(Long userId);
+    User getUserEntity(Long userId);
 }
