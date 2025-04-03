@@ -1,14 +1,15 @@
-package com.internship.user_service.service;
+package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
-import com.internship.user_service.exception.FavoriteAlreadyExistsException;
+import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.FavoriteMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
 import com.internship.user_service.repository.FavoriteRepository;
-import com.internship.user_service.repository.UserRepository;
+import com.internship.user_service.service.BlockService;
+import com.internship.user_service.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,8 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,10 +29,13 @@ class FavoriteServiceImplTest {
     private FavoriteRepository favoriteRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private FavoriteMapper favoriteMapper;
 
     @Mock
-    private FavoriteMapper favoriteMapper;
+    private UserService userService;
+
+    @Mock
+    private BlockService blockService;
 
     @InjectMocks
     private FavoriteServiceImpl favoriteService;
@@ -79,8 +81,9 @@ class FavoriteServiceImplTest {
         @DisplayName("Should add favorite successfully when users exist and favorite does not")
         void addFavorite_success() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(FAVORITE_USER_ID)).thenReturn(Optional.of(favoriteUser));
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(FAVORITE_USER_ID)).thenReturn(favoriteUser);
+            when(blockService.blockExists(USER_ID, FAVORITE_USER_ID)).thenReturn(false);
             when(favoriteRepository.existsById(favoriteId)).thenReturn(false);
             when(favoriteRepository.save(any(Favorite.class))).thenReturn(favorite); // Return the created favorite
             when(favoriteMapper.toResponse(favorite)).thenReturn(favoriteResponse);
@@ -95,8 +98,9 @@ class FavoriteServiceImplTest {
             assertThat(result.getId()).isEqualTo(favoriteId);
 
             // Verify interactions
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(FAVORITE_USER_ID);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(FAVORITE_USER_ID);
+            verify(blockService).blockExists(USER_ID, FAVORITE_USER_ID);
             verify(favoriteRepository).existsById(favoriteId);
             verify(favoriteRepository).save(argThat(fav ->
                     fav.getId().equals(favoriteId) &&
@@ -104,35 +108,60 @@ class FavoriteServiceImplTest {
                     fav.getFavoriteUser().equals(favoriteUser)
             ));
             verify(favoriteMapper).toResponse(favorite);
-            verifyNoMoreInteractions(userRepository, favoriteRepository, favoriteMapper);
+            verifyNoMoreInteractions(userService, blockService, favoriteRepository, favoriteMapper);
         }
 
         @Test
-        @DisplayName("Should throw FavoriteAlreadyExistsException when favorite already exists")
+        @DisplayName("Should throw IllegalArgumentException if favoriteUserId is blocked by userId")
+        void addFavorite_blocked() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(FAVORITE_USER_ID)).thenReturn(favoriteUser);
+            when(blockService.blockExists(USER_ID, FAVORITE_USER_ID)).thenReturn(true);
+
+            // Act & Assert
+            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, FAVORITE_USER_ID))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("User blocked user to be favorited.");
+
+            // Verify interactions (save and map should not be called)
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(FAVORITE_USER_ID);
+            verify(blockService).blockExists(USER_ID, FAVORITE_USER_ID);
+            verifyNoInteractions(favoriteRepository, favoriteMapper);
+            verifyNoMoreInteractions(userService, blockService);
+        }
+
+        @Test
+        @DisplayName("Should throw AlreadyExistsException when favorite already exists")
         void addFavorite_alreadyExists() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(FAVORITE_USER_ID)).thenReturn(Optional.of(favoriteUser));
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(FAVORITE_USER_ID)).thenReturn(favoriteUser);
+            when(blockService.blockExists(USER_ID, FAVORITE_USER_ID)).thenReturn(false);
+            when(favoriteRepository.existsById(favoriteId)).thenReturn(false);
             when(favoriteRepository.existsById(favoriteId)).thenReturn(true);
 
             // Act & Assert
             assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, FAVORITE_USER_ID))
-                    .isInstanceOf(FavoriteAlreadyExistsException.class)
+                    .isInstanceOf(AlreadyExistsException.class)
                     .hasMessage("Favorite relationship already exists.");
 
             // Verify interactions (save and map should not be called)
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(FAVORITE_USER_ID);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(FAVORITE_USER_ID);
+            verify(blockService).blockExists(USER_ID, FAVORITE_USER_ID);
             verify(favoriteRepository).existsById(favoriteId);
             verifyNoInteractions(favoriteMapper);
-            verifyNoMoreInteractions(userRepository, favoriteRepository);
+            verifyNoMoreInteractions(userService, blockService, favoriteRepository);
         }
 
         @Test
         @DisplayName("Should throw UserNotFoundException when user does not exist")
         void addFavorite_userNotFound() {
             // Arrange
-            when(userRepository.findById(NON_EXISTENT_USER_ID)).thenReturn(Optional.empty());
+            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
 
             // Act & Assert
             assertThatThrownBy(() -> favoriteService.addFavorite(NON_EXISTENT_USER_ID, FAVORITE_USER_ID))
@@ -140,18 +169,19 @@ class FavoriteServiceImplTest {
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userRepository).findById(NON_EXISTENT_USER_ID);
-            verify(userRepository, never()).findById(FAVORITE_USER_ID);
-            verifyNoInteractions(favoriteRepository, favoriteMapper);
-            verifyNoMoreInteractions(userRepository);
+            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService, never()).getUserEntity(FAVORITE_USER_ID);
+            verifyNoInteractions(blockService, favoriteRepository, favoriteMapper);
+            verifyNoMoreInteractions(userService);
         }
 
         @Test
         @DisplayName("Should throw UserNotFoundException when favorite user does not exist")
         void addFavorite_favoriteUserNotFound() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(NON_EXISTENT_USER_ID)).thenReturn(Optional.empty());
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
 
             // Act & Assert
             assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, NON_EXISTENT_USER_ID))
@@ -159,10 +189,10 @@ class FavoriteServiceImplTest {
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(NON_EXISTENT_USER_ID);
-            verifyNoInteractions(favoriteRepository, favoriteMapper);
-            verifyNoMoreInteractions(userRepository);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verifyNoInteractions(blockService, favoriteRepository, favoriteMapper);
+            verifyNoMoreInteractions(userService);
         }
 
         @Test
@@ -174,7 +204,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify interactions
-            verifyNoInteractions(userRepository, favoriteRepository, favoriteMapper);
+            verifyNoInteractions(userService, blockService, favoriteRepository, favoriteMapper);
         }
 
         @Test
@@ -186,7 +216,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify no repository/mapper interactions happened
-            verifyNoInteractions(userRepository, favoriteRepository, favoriteMapper);
+            verifyNoInteractions(userService, blockService, favoriteRepository, favoriteMapper);
         }
 
         @Test
@@ -198,7 +228,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify no repository/mapper interactions happened
-            verifyNoInteractions(userRepository, favoriteRepository, favoriteMapper);
+            verifyNoInteractions(userService, blockService, favoriteRepository, favoriteMapper);
         }
     }
 
@@ -210,8 +240,8 @@ class FavoriteServiceImplTest {
         @DisplayName("Should delete favorite successfully when users and favorite exist")
         void deleteFavorite_success() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(FAVORITE_USER_ID)).thenReturn(Optional.of(favoriteUser));
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(FAVORITE_USER_ID)).thenReturn(favoriteUser);
             when(favoriteRepository.existsById(favoriteId)).thenReturn(true);
             doNothing().when(favoriteRepository).deleteById(favoriteId);
 
@@ -219,19 +249,19 @@ class FavoriteServiceImplTest {
             favoriteService.deleteFavorite(USER_ID, FAVORITE_USER_ID);
 
             // Assert & Verify interactions
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(FAVORITE_USER_ID);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(FAVORITE_USER_ID);
             verify(favoriteRepository).existsById(favoriteId);
             verify(favoriteRepository).deleteById(favoriteId);
-            verifyNoMoreInteractions(userRepository, favoriteRepository);
+            verifyNoMoreInteractions(userService, favoriteRepository);
         }
 
         @Test
         @DisplayName("Should throw IllegalArgumentException when favorite does not exist")
         void deleteFavorite_doesNotExist() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(FAVORITE_USER_ID)).thenReturn(Optional.of(favoriteUser));
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(FAVORITE_USER_ID)).thenReturn(favoriteUser);
             when(favoriteRepository.existsById(favoriteId)).thenReturn(false);
 
             // Act & Assert
@@ -240,17 +270,18 @@ class FavoriteServiceImplTest {
                     .hasMessage("Favorite relationship does not exist.");
 
             // Verify interactions (delete should not be called)
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(FAVORITE_USER_ID);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(FAVORITE_USER_ID);
             verify(favoriteRepository).existsById(favoriteId);
-            verifyNoMoreInteractions(userRepository, favoriteRepository);
+            verifyNoMoreInteractions(userService, favoriteRepository);
         }
 
         @Test
         @DisplayName("Should throw UserNotFoundException when user does not exist")
         void deleteFavorite_userNotFound() {
             // Arrange
-            when(userRepository.findById(NON_EXISTENT_USER_ID)).thenReturn(Optional.empty());
+            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
 
             // Act & Assert
             assertThatThrownBy(() -> favoriteService.deleteFavorite(NON_EXISTENT_USER_ID, FAVORITE_USER_ID))
@@ -258,18 +289,19 @@ class FavoriteServiceImplTest {
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userRepository).findById(NON_EXISTENT_USER_ID);
-            verify(userRepository, never()).findById(FAVORITE_USER_ID);
+            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService, never()).getUserEntity(FAVORITE_USER_ID);
             verifyNoInteractions(favoriteRepository);
-            verifyNoMoreInteractions(userRepository);
+            verifyNoMoreInteractions(userService);
         }
 
         @Test
         @DisplayName("Should throw UserNotFoundException when favorite user does not exist")
         void deleteFavorite_favoriteUserNotFound() {
             // Arrange
-            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-            when(userRepository.findById(NON_EXISTENT_USER_ID)).thenReturn(Optional.empty());
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
 
             // Act & Assert
             assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID, NON_EXISTENT_USER_ID))
@@ -277,10 +309,10 @@ class FavoriteServiceImplTest {
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userRepository).findById(USER_ID);
-            verify(userRepository).findById(NON_EXISTENT_USER_ID);
+            verify(userService).getUserEntity(USER_ID);
+            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
             verifyNoInteractions(favoriteRepository);
-            verifyNoMoreInteractions(userRepository);
+            verifyNoMoreInteractions(userService);
         }
 
         @Test
@@ -292,7 +324,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify no repository interactions happened
-            verifyNoInteractions(userRepository, favoriteRepository);
+            verifyNoInteractions(userService, favoriteRepository);
         }
 
         @Test
@@ -304,7 +336,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify no repository interactions happened
-            verifyNoInteractions(userRepository, favoriteRepository);
+            verifyNoInteractions(userService, favoriteRepository);
         }
 
         @Test
@@ -316,7 +348,7 @@ class FavoriteServiceImplTest {
                     .hasMessage("Invalid userId or favoriteUserId.");
 
             // Verify no repository interactions happened
-            verifyNoInteractions(userRepository, favoriteRepository);
+            verifyNoInteractions(userService, favoriteRepository);
         }
     }
 }

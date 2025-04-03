@@ -1,10 +1,10 @@
-package com.internship.user_service.service;
+package com.internship.user_service.service.impl;
 
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.PictureNotFoundException;
-import com.internship.user_service.exception.UserAlreadyExistsException;
+import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.User;
@@ -19,12 +19,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -95,7 +97,7 @@ class UserServiceImplTest {
     @Test
     void createUserWhenUserAlreadyExists() {
         when(userRepository.existsById(1L)).thenReturn(true);
-        UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(userDTO));
+        AlreadyExistsException exception = assertThrows(AlreadyExistsException.class, () -> userService.createUser(userDTO));
         assertEquals("User with id 1 already exists.", exception.getMessage());
 
         verify(userRepository, times(1)).existsById(1L);
@@ -151,6 +153,7 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findAll();
         verify(userMapper, times(1)).toUserResponse(user);
     }
+
     @Test
     void getAllUsersWhenEmptyList() {
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
@@ -194,7 +197,7 @@ class UserServiceImplTest {
     }
 
     @Test
-    void addProfilePictureWhenIOException() throws IOException{
+    void addProfilePictureWhenIOException() throws IOException {
         MultipartFile mockIOExceptionFile = mock(MultipartFile.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(mockIOExceptionFile.getOriginalFilename()).thenReturn("valid-image.jpg");
@@ -234,7 +237,6 @@ class UserServiceImplTest {
         verify(mockInvalidFileExtension, times(1)).getOriginalFilename();
         verify(mockNullFile, times(1)).getOriginalFilename();
     }
-
 
 
     @Test
@@ -293,5 +295,26 @@ class UserServiceImplTest {
 
         assertNotNull(exception);
         assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void getUserEntity_shouldReturnUserEntity() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        User result = userService.getUserEntity(1L);
+
+        assertEquals(user, result);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void getUserEntity_shouldThrowUserNotFoundException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserEntity(1L))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found.");
+
+        verifyNoMoreInteractions(userRepository);
     }
 }
