@@ -100,7 +100,6 @@ public class UserServiceImpl implements UserService {
                     return new UserNotFoundException("User not found.");
                 });
         UserResponse userResponse = userMapper.toUserResponse(user);
-        userResponse.setProfilePicturePath(FilePath.PATH_PICTURE_URL + user.getProfilePicturePath());
         log.info("Retrieved user with id {}.", userId);
         return userResponse;
     }

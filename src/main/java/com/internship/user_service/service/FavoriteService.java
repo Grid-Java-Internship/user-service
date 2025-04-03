@@ -1,12 +1,15 @@
 package com.internship.user_service.service;
 
 import com.internship.user_service.dto.FavoriteResponse;
+import com.internship.user_service.dto.UserResponse;
+
+import java.util.List;
 
 public interface FavoriteService {
     /**
      * Adds a favorite user to the user with the given {@code userId}.
      *
-     * @param userId The ID of the user to whom the favorite is to be added.
+     * @param userId         The ID of the user to whom the favorite is to be added.
      * @param favoriteUserId The ID of the user to be added as a favorite.
      * @return {@code true} if the favorite has been added, or {@code false} if the favorite already exists.
      */
@@ -15,7 +18,7 @@ public interface FavoriteService {
     /**
      * Deletes a favorite user to the user with the given {@code userId}.
      *
-     * @param userId The ID of the user to whom the favorite is to be deleted.
+     * @param userId         The ID of the user to whom the favorite is to be deleted.
      * @param favoriteUserId The ID of the user to be deleted as a favorite.
      */
     void deleteFavorite(Long userId, Long favoriteUserId);
@@ -23,9 +26,17 @@ public interface FavoriteService {
     /**
      * Checks if a favorite relationship exists between the given user IDs.
      *
-     * @param userId The ID of the user to whom the favorite is to be checked.
+     * @param userId         The ID of the user to whom the favorite is to be checked.
      * @param favoriteUserId The ID of the user to be checked as a favorite.
      * @return {@code true} if the favorite relationship exists, or {@code false} if it does not.
      */
     boolean favoriteExists(Long userId, Long favoriteUserId);
+
+    /**
+     * Returns a list of all favorite users of the user with the given {@code userId}.
+     *
+     * @param userId The ID of the user whose favorite users are to be retrieved.
+     * @return A list of the favorite users of the user with the given {@code userId}.
+     */
+    List<UserResponse> getFavoriteUsers(Long userId);
 }

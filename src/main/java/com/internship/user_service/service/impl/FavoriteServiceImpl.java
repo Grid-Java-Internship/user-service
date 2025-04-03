@@ -1,8 +1,10 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
+import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.mapper.FavoriteMapper;
+import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
@@ -12,8 +14,9 @@ import com.internship.user_service.service.FavoriteService;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,8 +24,33 @@ import org.springframework.stereotype.Service;
 public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final FavoriteMapper favoriteMapper;
+
+    private final UserMapper userMapper;
     private final UserService userService;
     private final BlockService blockService;
+
+    @Override
+    public List<UserResponse> getFavoriteUsers(Long userId) {
+        // Retrieve the user if it exists
+        User user = userService.getUserEntity(userId);
+
+        // Retrieve favorite users
+        List<User> favoriteUsers = favoriteRepository.findByUser(user).stream()
+                .map(Favorite::getFavoriteUser)
+                .toList();
+
+        // If no favorite users, return empty list
+        if (favoriteUsers.isEmpty()) {
+            log.info("User with userId {} has no favorite users.", userId);
+            return List.of();
+        }
+
+        // Map favorite users to user responses and return
+        log.info("Retrieved favorite users for user with userId {}.", userId);
+        return favoriteUsers.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+    }
 
     @Override
     public FavoriteResponse addFavorite(Long userId, Long favoriteUserId) {
