@@ -37,7 +37,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         User user = userService.getUserEntity(userId);
 
         // Retrieve favorite users
-        List<User> favoriteUsers = getFavoriteUsersPage(user, page, pageSize).getContent();
+        List<Long> favoriteUsers = getFavoriteUsersPage(user, page, pageSize).getContent();
 
         // If there are no favorite users, return empty list
         if (favoriteUsers.isEmpty()) {
@@ -46,10 +46,8 @@ public class FavoriteServiceImpl implements FavoriteService {
             log.info("Retrieved favorite users for user with userId {}.", userId);
         }
 
-        // Map favorite users to user responses and return
-        return favoriteUsers.stream()
-                .map(User::getId)
-                .toList();
+        // Return favorite users
+        return favoriteUsers;
     }
 
     @Override
@@ -141,10 +139,11 @@ public class FavoriteServiceImpl implements FavoriteService {
      * @param pageSize The page size.
      * @return A page of favorite users.
      */
-    private Page<User> getFavoriteUsersPage(User user, int page, int pageSize) {
+    private Page<Long> getFavoriteUsersPage(User user, int page, int pageSize) {
         Pageable pageable = PageRequest.of(page, pageSize);
         return favoriteRepository
                 .findByUser(user, pageable)
-                .map(Favorite::getFavoriteUser);
+                .map(Favorite::getId)
+                .map(FavoriteId::getFavoriteUserId);
     }
 }
