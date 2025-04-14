@@ -114,8 +114,8 @@ class BlockServiceImplTest {
 
             when(userService.getUserEntity(USER_ID)).thenReturn(user);
             when(userService.getUserEntity(ORIGINAL_BLOCKED_USER_ID)).thenReturn(blockedUser);
-            when(blockRepository.existsById(blockId)).thenReturn(false); // Koristi blockId (1L, 4L)
-            when(blockRepository.save(any(Block.class))).thenReturn(block); // Koristi block (sa ID 1L, 4L)
+            when(blockRepository.existsById(blockId)).thenReturn(false);
+            when(blockRepository.save(any(Block.class))).thenReturn(block);
             when(favoriteService.favoriteExists(USER_ID, ORIGINAL_BLOCKED_USER_ID)).thenReturn(true);
             doNothing().when(favoriteService).deleteFavorite(USER_ID, ORIGINAL_BLOCKED_USER_ID);
 
@@ -153,7 +153,7 @@ class BlockServiceImplTest {
             verify(userService).getUserEntity(USER_ID);
             verify(userService).getUserEntity(ORIGINAL_BLOCKED_USER_ID);
             verify(blockRepository).existsById(blockId);
-            verify(blockRepository).save(any(Block.class)); // Može i argThat ako želiš preciznije
+            verify(blockRepository).save(any(Block.class));
             verify(favoriteService).favoriteExists(USER_ID, ORIGINAL_BLOCKED_USER_ID);
             verify(favoriteService, never()).deleteFavorite(anyLong(), anyLong());
             verifyNoMoreInteractions(userService, blockRepository, favoriteService);
@@ -195,7 +195,7 @@ class BlockServiceImplTest {
 
             // Verify interactions
             verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
-            verify(userService, never()).getUserEntity(ORIGINAL_BLOCKED_USER_ID); // Proveri da ovo nije pozvano
+            verify(userService, never()).getUserEntity(ORIGINAL_BLOCKED_USER_ID);
             verifyNoMoreInteractions(userService);
             verifyNoInteractions(blockRepository, favoriteService);
         }
