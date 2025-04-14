@@ -237,5 +237,6 @@ gradle-app.setting
 ### Tests ###
 htmlReport
 
-env.properties
+.env.properties
+.env
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,intellij,gradle,maven,git

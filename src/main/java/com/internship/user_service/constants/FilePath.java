@@ -5,7 +5,7 @@ import java.util.Set;
 public class FilePath {
 
     public static final String PATH = "/src/main/resources/static/uploads/profile_pictures";
-    public static final String PATH_PICTURE_URL = "/uploads/profile_pictures/";
+    public static final String PATH_PICTURE_URL = "/static/uploads/profile_pictures/";
 
     public static final String JPG = "jpg";
     public static final String JPEG = "jpeg";
