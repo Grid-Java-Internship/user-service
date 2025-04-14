@@ -43,19 +43,19 @@ public class UserExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ExceptionResponse> handleException(Exception ex) {
-//        String errorMessage = "Request failed because of an internal problem. " +
-//                "Please contact support or your administrator. Error: " + ex.getMessage();
-//        log.error("Internal server error occurred: {}", errorMessage);
-//
-//        ExceptionResponse errorResponse = ExceptionResponse.builder()
-//                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-//                .messages(List.of(errorMessage))
-//                .success(false)
-//                .build();
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ExceptionResponse> handleException(Exception ex) {
+        String errorMessage = "Request failed because of an internal problem. " +
+                              "Please contact support or your administrator. Error: " + ex.getMessage();
+        log.error("Internal server error occurred: {}", errorMessage);
+
+        ExceptionResponse errorResponse = ExceptionResponse.builder()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .messages(List.of(errorMessage))
+                .success(false)
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
@@ -106,6 +106,12 @@ public class UserExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleUnavailableUserException(UserUnavailableException ex) {
         log.error("InvalidTimeFormatException occurred: {}", ex.getMessage());
         return handleUserDefinedException(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ExceptionResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.error("IllegalArgumentException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
     }
 
 }

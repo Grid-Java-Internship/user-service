@@ -1,0 +1,22 @@
+package com.internship.user_service.service;
+
+import com.internship.user_service.dto.FavoriteResponse;
+
+public interface FavoriteService {
+    /**
+     * Adds a favorite user to the user with the given {@code userId}.
+     *
+     * @param userId The ID of the user to whom the favorite is to be added.
+     * @param favoriteUserId The ID of the user to be added as a favorite.
+     * @return {@code true} if the favorite has been added, or {@code false} if the favorite already exists.
+     */
+    FavoriteResponse addFavorite(Long userId, Long favoriteUserId);
+
+    /**
+     * Deletes a favorite user to the user with the given {@code userId}.
+     *
+     * @param userId The ID of the user to whom the favorite is to be deleted.
+     * @param favoriteUserId The ID of the user to be deleted as a favorite.
+     */
+    void deleteFavorite(Long userId, Long favoriteUserId);
+}
