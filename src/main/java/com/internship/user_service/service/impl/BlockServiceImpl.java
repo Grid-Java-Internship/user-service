@@ -1,9 +1,7 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.exception.AlreadyExistsException;
-import com.internship.user_service.model.Block;
-import com.internship.user_service.model.BlockId;
-import com.internship.user_service.model.User;
+import com.internship.user_service.model.*;
 import com.internship.user_service.repository.BlockRepository;
 import com.internship.user_service.service.BlockService;
 import com.internship.user_service.service.FavoriteService;
@@ -11,8 +9,13 @@ import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -80,6 +83,23 @@ public class BlockServiceImpl implements BlockService {
         return blockRepository.existsById(blockId);
     }
 
+    @Override
+    public List<Long> getBlockedUsersByUserId(Long blockingUserId, int page, int pageSize) {
+
+        User user = userService.getUserEntity(blockingUserId);
+
+        List<Long> blockedUsers = getBlockedUsersPage(user, page, pageSize).getContent();
+
+        if (blockedUsers.isEmpty()) {
+            log.info("User with userId {} has not blocked any users.", blockingUserId);
+        } else {
+            log.info("Retrieved blocked users for user with userId {}.", blockingUserId);
+        }
+
+        return blockedUsers;
+
+    }
+
     /**
      * Verifies that the given user IDs are valid.
      * <p>
@@ -95,5 +115,13 @@ public class BlockServiceImpl implements BlockService {
             log.error("Invalid userId {} or blockedUserId {}.", userId, blockedUserId);
             throw new IllegalArgumentException("Invalid userId or blockedUserId.");
         }
+    }
+
+    private Page<Long> getBlockedUsersPage(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return blockRepository
+                .findByBlockingUser(user, pageable)
+                .map(Block::getId)
+                .map(BlockId::getBlockedUserId);
     }
 }
