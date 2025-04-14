@@ -84,9 +84,9 @@ public class UserExceptionHandler {
         return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ExceptionResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
-        log.error("UserAlreadyExistsException occurred: {}", ex.getMessage());
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<ExceptionResponse> handleUserAlreadyExistsException(AlreadyExistsException ex) {
+        log.error("AlreadyExistsException occurred: {}", ex.getMessage());
         return handleUserDefinedException(ex, HttpStatus.CONFLICT);
     }
 

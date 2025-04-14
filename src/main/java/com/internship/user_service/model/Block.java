@@ -1,13 +1,11 @@
 package com.internship.user_service.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+@Data
 @NoArgsConstructor
-@Getter
-@Setter
+@AllArgsConstructor
 @Entity
 @Table(name = "blocks")
 public class Block {

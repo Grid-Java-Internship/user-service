@@ -19,4 +19,13 @@ public interface FavoriteService {
      * @param favoriteUserId The ID of the user to be deleted as a favorite.
      */
     void deleteFavorite(Long userId, Long favoriteUserId);
+
+    /**
+     * Checks if a favorite relationship exists between the given user IDs.
+     *
+     * @param userId The ID of the user to whom the favorite is to be checked.
+     * @param favoriteUserId The ID of the user to be checked as a favorite.
+     * @return {@code true} if the favorite relationship exists, or {@code false} if it does not.
+     */
+    boolean favoriteExists(Long userId, Long favoriteUserId);
 }

@@ -1,14 +1,18 @@
-package com.internship.user_service.service;
+package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
-import com.internship.user_service.exception.FavoriteAlreadyExistsException;
+import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.mapper.FavoriteMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
 import com.internship.user_service.repository.FavoriteRepository;
+import com.internship.user_service.service.BlockService;
+import com.internship.user_service.service.FavoriteService;
+import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -16,8 +20,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
-    private final UserService userService;
     private final FavoriteMapper favoriteMapper;
+    private final UserService userService;
+    private final BlockService blockService;
 
     @Override
     public FavoriteResponse addFavorite(Long userId, Long favoriteUserId) {
@@ -25,15 +30,19 @@ public class FavoriteServiceImpl implements FavoriteService {
         verifyFavoriteUserIds(userId, favoriteUserId);
 
         // Retrieve users if they exist
-        User user = userService.getUserToService(userId);
-        User favoriteUser = userService.getUserToService(favoriteUserId);
+        User user = userService.getUserEntity(userId);
+        User favoriteUser = userService.getUserEntity(favoriteUserId);
 
-        // TODO: Check if user blocked the favoriteUser
+        // Check if user blocked favoriteUser
+        if (blockService.blockExists(userId, favoriteUserId)) {
+            log.error("User with userId {} has already blocked user with userId {}.", userId, favoriteUserId);
+            throw new IllegalArgumentException("User blocked user to be favorited.");
+        }
 
         // Check if favorite already exists
         if (favoriteExists(userId, favoriteUserId)) {
             log.error("Favorite with userId {} and favoriteUserId {} already exists.", userId, favoriteUserId);
-            throw new FavoriteAlreadyExistsException("Favorite relationship already exists.");
+            throw new AlreadyExistsException("Favorite relationship already exists.");
         }
 
         // Add favorite user
@@ -53,8 +62,8 @@ public class FavoriteServiceImpl implements FavoriteService {
         verifyFavoriteUserIds(userId, favoriteUserId);
 
         // Retrieve users if they exist
-        userService.getUserToService(userId);
-        userService.getUserToService(favoriteUserId);
+        userService.getUserEntity(userId);
+        userService.getUserEntity(favoriteUserId);
 
         // Check if favorite exists
         if (!favoriteExists(userId, favoriteUserId)) {
@@ -65,6 +74,12 @@ public class FavoriteServiceImpl implements FavoriteService {
         // Delete favorite user
         favoriteRepository.deleteById(new FavoriteId(userId, favoriteUserId));
         log.info("Favorite with userId {} and favoriteUserId {} deleted successfully.", userId, favoriteUserId);
+    }
+
+    @Override
+    public boolean favoriteExists(Long userId, Long favoriteUserId) {
+        FavoriteId favoriteId = new FavoriteId(userId, favoriteUserId);
+        return favoriteRepository.existsById(favoriteId);
     }
 
     /**
@@ -82,17 +97,5 @@ public class FavoriteServiceImpl implements FavoriteService {
             log.error("Invalid userId {} or favoriteUserId {}.", userId, favoriteUserId);
             throw new IllegalArgumentException("Invalid userId or favoriteUserId.");
         }
-    }
-
-    /**
-     * Verifies if a favorite with the given IDs exists.
-     *
-     * @param userId         The ID of the user to whom the favorite is to be added.
-     * @param favoriteUserId The ID of the user to be added as a favorite.
-     * @return {@code true} if the favorite with the given IDs exists, or {@code false} if it does not.
-     */
-    private boolean favoriteExists(Long userId, Long favoriteUserId) {
-        FavoriteId favoriteId = new FavoriteId(userId, favoriteUserId);
-        return favoriteRepository.existsById(favoriteId);
     }
 }

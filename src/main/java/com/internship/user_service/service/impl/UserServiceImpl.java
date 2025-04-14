@@ -1,9 +1,12 @@
-package com.internship.user_service.service;
+package com.internship.user_service.service.impl;
 
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
+import com.internship.user_service.exception.PictureNotFoundException;
+import com.internship.user_service.exception.AlreadyExistsException;
+import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.Availability;
 import com.internship.user_service.model.User;
@@ -13,6 +16,7 @@ import com.internship.user_service.repository.AvailabilityRepository;
 import com.internship.user_service.repository.UserRepository;
 import com.internship.user_service.dto.UserResponse;
 import jakarta.transaction.Transactional;
+import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,7 +57,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse createUser(UserDTO userDTO) {
         if (userRepository.existsById(userDTO.getId())) {
             log.error("User with id {} already exists.", userDTO.getId());
-            throw new UserAlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
+            throw new AlreadyExistsException("User with id " + userDTO.getId() + " already exists.");
         }
         userDTO.setStatus(Status.ACTIVE);
         userDTO.setVerified(false);
@@ -191,7 +195,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserToService(Long userId) {
+    public User getUserEntity(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> {
             log.error("User with id {} not found.", userId);
             return new UserNotFoundException("User not found.");
