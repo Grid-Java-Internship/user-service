@@ -28,12 +28,11 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final FavoriteMapper favoriteMapper;
 
-    private final UserMapper userMapper;
     private final UserService userService;
     private final BlockService blockService;
 
     @Override
-    public List<UserResponse> getFavoriteUsers(Long userId, int page, int pageSize) {
+    public List<Long> getFavoriteUsers(Long userId, int page, int pageSize) {
         // Retrieve the user if it exists
         User user = userService.getUserEntity(userId);
 
@@ -49,7 +48,7 @@ public class FavoriteServiceImpl implements FavoriteService {
 
         // Map favorite users to user responses and return
         return favoriteUsers.stream()
-                .map(userMapper::toUserResponse)
+                .map(User::getId)
                 .toList();
     }
 

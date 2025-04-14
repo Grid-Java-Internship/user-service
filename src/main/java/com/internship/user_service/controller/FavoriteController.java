@@ -1,7 +1,6 @@
 package com.internship.user_service.controller;
 
 import com.internship.user_service.dto.FavoriteResponse;
-import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +15,16 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
 
     /**
-     * Retrieves the list of favorite users for the given {@code userId}.
+     * Returns a list of IDs of users who are favorites of the user with the given
+     * {@code userId}.
      *
-     * @param userId The ID of the user whose favorite users are to be retrieved.
-     * @return A {@link ResponseEntity} containing a list of {@link UserResponse} objects representing the favorite users.
+     * @param userId     The ID of the user whose favorite users are to be retrieved.
+     * @param page       The page number.
+     * @param pageSize   The page size.
+     * @return A list of user IDs.
      */
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getFavoriteUsers(
+    public ResponseEntity<List<Long>> getFavoriteUsers(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize) {

@@ -1,11 +1,9 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
-import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.FavoriteMapper;
-import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
@@ -39,9 +37,6 @@ class FavoriteServiceImplTest {
     private FavoriteMapper favoriteMapper;
 
     @Mock
-    private UserMapper userMapper;
-
-    @Mock
     private UserService userService;
 
     @Mock
@@ -52,7 +47,6 @@ class FavoriteServiceImplTest {
 
     private User user;
     private User favoriteUser;
-    private UserResponse userResponse;
     private FavoriteId favoriteId;
     private Favorite favorite;
     private FavoriteResponse favoriteResponse;
@@ -70,12 +64,6 @@ class FavoriteServiceImplTest {
                 .build();
 
         favoriteUser = User.builder()
-                .id(FAVORITE_USER_ID)
-                .name("Favorite")
-                .surname("User")
-                .build();
-
-        userResponse = UserResponse.builder()
                 .id(FAVORITE_USER_ID)
                 .name("Favorite")
                 .surname("User")
@@ -99,22 +87,20 @@ class FavoriteServiceImplTest {
             // Arrange
             when(userService.getUserEntity(USER_ID)).thenReturn(user);
             when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(favorite)));
-            when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
 
             // Act
-            List<UserResponse> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
 
             // Assert
             assertThat(result)
                     .isNotNull()
                     .hasSize(1)
-                    .contains(userResponse);
+                    .contains(FAVORITE_USER_ID);
 
             // Verify interactions
             verify(userService).getUserEntity(USER_ID);
             verify(favoriteRepository).findByUser(any(User.class), any(Pageable.class));
-            verify(userMapper).toUserResponse(any(User.class));
-            verifyNoMoreInteractions(userService, favoriteRepository, userMapper);
+            verifyNoMoreInteractions(userService, favoriteRepository);
         }
 
         @Test
@@ -132,7 +118,7 @@ class FavoriteServiceImplTest {
             // Verify interactions
             verify(userService).getUserEntity(USER_ID);
             verifyNoMoreInteractions(userService);
-            verifyNoInteractions(favoriteRepository, userMapper);
+            verifyNoInteractions(favoriteRepository);
         }
 
         @Test
@@ -143,7 +129,7 @@ class FavoriteServiceImplTest {
             when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
 
             // Act
-            List<UserResponse> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
 
             // Assert
             assertThat(result).isEmpty();
@@ -152,7 +138,6 @@ class FavoriteServiceImplTest {
             verify(userService).getUserEntity(USER_ID);
             verify(favoriteRepository).findByUser(any(User.class), any(Pageable.class));
             verifyNoMoreInteractions(userService, favoriteRepository);
-            verifyNoInteractions(userMapper);
         }
     }
 
