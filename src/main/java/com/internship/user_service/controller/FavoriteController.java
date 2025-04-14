@@ -6,11 +6,30 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/v1/favorites")
 @RequiredArgsConstructor
 public class FavoriteController {
     private final FavoriteService favoriteService;
+
+    /**
+     * Returns a list of IDs of users who are favorites of the user with the given
+     * {@code userId}.
+     *
+     * @param userId     The ID of the user whose favorite users are to be retrieved.
+     * @param page       The page number.
+     * @param pageSize   The page size.
+     * @return A list of user IDs.
+     */
+    @GetMapping
+    public ResponseEntity<List<Long>> getFavoriteUsers(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(favoriteService.getFavoriteUsers(userId, page, pageSize));
+    }
 
     /**
      * Adds a favorite user to the user with the given {@code userId}.

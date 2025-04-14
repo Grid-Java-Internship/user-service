@@ -123,6 +123,8 @@ class UserServiceImplTest {
     @Test
     void getUserWhenExists() {
         user.setProfilePicturePath("pictureUserId_12");
+        userResponse.setProfilePicturePath(FilePath.PATH_PICTURE_URL + user.getProfilePicturePath());
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
 

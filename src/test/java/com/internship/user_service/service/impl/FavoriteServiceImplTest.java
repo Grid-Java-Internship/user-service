@@ -18,8 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
-import static org.assertj.core.api.Assertions.*;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -50,7 +55,6 @@ class FavoriteServiceImplTest {
     private static final Long FAVORITE_USER_ID = 2L;
     private static final Long NON_EXISTENT_USER_ID = 99L;
 
-
     @BeforeEach
     void setUp() {
         user = User.builder()
@@ -72,6 +76,69 @@ class FavoriteServiceImplTest {
         favoriteResponse = FavoriteResponse.builder()
                 .id(favoriteId)
                 .build();
+    }
+
+    @Nested
+    @DisplayName("getFavoriteUsers Tests")
+    class GetFavoriteUsersTests {
+        @Test
+        @DisplayName("Should get favorite users successfully")
+        void getFavoriteUsers_success() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(favorite)));
+
+            // Act
+            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+
+            // Assert
+            assertThat(result)
+                    .isNotNull()
+                    .hasSize(1)
+                    .contains(FAVORITE_USER_ID);
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verify(favoriteRepository).findByUser(any(User.class), any(Pageable.class));
+            verifyNoMoreInteractions(userService, favoriteRepository);
+        }
+
+        @Test
+        @DisplayName("Should throw UserNotFoundException when user does not exist")
+        void getFavoriteUsers_userNotFound() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenThrow(
+                    new UserNotFoundException("User not found."));
+
+            // Act & Assert
+            assertThatThrownBy(() -> favoriteService.getFavoriteUsers(USER_ID, 0, 10))
+                    .isInstanceOf(UserNotFoundException.class)
+                    .hasMessage("User not found.");
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verifyNoMoreInteractions(userService);
+            verifyNoInteractions(favoriteRepository);
+        }
+
+        @Test
+        @DisplayName("Should return empty list when user has no favorite users")
+        void getFavoriteUsers_noFavoriteUsers() {
+            // Arrange
+            when(userService.getUserEntity(USER_ID)).thenReturn(user);
+            when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+
+            // Act
+            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+
+            // Assert
+            assertThat(result).isEmpty();
+
+            // Verify interactions
+            verify(userService).getUserEntity(USER_ID);
+            verify(favoriteRepository).findByUser(any(User.class), any(Pageable.class));
+            verifyNoMoreInteractions(userService, favoriteRepository);
+        }
     }
 
     @Nested

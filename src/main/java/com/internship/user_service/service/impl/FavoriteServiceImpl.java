@@ -1,8 +1,10 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.FavoriteResponse;
+import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.mapper.FavoriteMapper;
+import com.internship.user_service.mapper.UserMapper;
 import com.internship.user_service.model.Favorite;
 import com.internship.user_service.model.FavoriteId;
 import com.internship.user_service.model.User;
@@ -12,8 +14,12 @@ import com.internship.user_service.service.FavoriteService;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,8 +27,28 @@ import org.springframework.stereotype.Service;
 public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final FavoriteMapper favoriteMapper;
+
     private final UserService userService;
     private final BlockService blockService;
+
+    @Override
+    public List<Long> getFavoriteUsers(Long userId, int page, int pageSize) {
+        // Retrieve the user if it exists
+        User user = userService.getUserEntity(userId);
+
+        // Retrieve favorite users
+        List<Long> favoriteUsers = getFavoriteUsersPage(user, page, pageSize).getContent();
+
+        // If there are no favorite users, return empty list
+        if (favoriteUsers.isEmpty()) {
+            log.info("User with userId {} has no favorite users.", userId);
+        } else {
+            log.info("Retrieved favorite users for user with userId {}.", userId);
+        }
+
+        // Return favorite users
+        return favoriteUsers;
+    }
 
     @Override
     public FavoriteResponse addFavorite(Long userId, Long favoriteUserId) {
@@ -97,5 +123,27 @@ public class FavoriteServiceImpl implements FavoriteService {
             log.error("Invalid userId {} or favoriteUserId {}.", userId, favoriteUserId);
             throw new IllegalArgumentException("Invalid userId or favoriteUserId.");
         }
+    }
+
+    /**
+     * Retrieves a page of users who are favorites of the given {@code user}.
+     * <p>
+     * The page size is determined by the given {@code pageSize}, and the page number
+     * is determined by the given {@code page}.
+     * <p>
+     * The returned page contains the favorite users mapped from the page of
+     * {@link Favorite} objects returned by the repository.
+     *
+     * @param user     The user whose favorite users are to be retrieved.
+     * @param page     The page number.
+     * @param pageSize The page size.
+     * @return A page of favorite users.
+     */
+    private Page<Long> getFavoriteUsersPage(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return favoriteRepository
+                .findByUser(user, pageable)
+                .map(Favorite::getId)
+                .map(FavoriteId::getFavoriteUserId);
     }
 }
