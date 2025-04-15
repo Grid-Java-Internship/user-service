@@ -1,6 +1,5 @@
 package com.internship.user_service.model;
 
-import com.internship.user_service.model.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -66,19 +65,11 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime created;
 
-    @NotNull
-    @Column(nullable = false)
-    private Boolean verified;
-
     private LocalTime startTime;
 
     private LocalTime endTime;
 
     private String profilePicturePath;
-
-    @NotNull
-    @Column(nullable = false)
-    private Status status;
 
     @OneToMany(mappedBy = "user")
     List<Availability> availabilities;

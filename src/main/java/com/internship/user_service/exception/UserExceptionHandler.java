@@ -90,6 +90,24 @@ public class UserExceptionHandler {
         return handleUserDefinedException(ex, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ExceptionResponse> handleConflictException(ConflictException ex) {
+        log.error("ConflictException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InvalidTimeFormatException.class)
+    public ResponseEntity<ExceptionResponse> handleInvalidTimeException(InvalidTimeFormatException ex) {
+        log.error("InvalidTimeFormatException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserUnavailableException.class)
+    public ResponseEntity<ExceptionResponse> handleUnavailableUserException(UserUnavailableException ex) {
+        log.error("InvalidTimeFormatException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ExceptionResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         log.error("IllegalArgumentException occurred: {}", ex.getMessage());

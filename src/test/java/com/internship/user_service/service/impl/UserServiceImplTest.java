@@ -1,14 +1,18 @@
 package com.internship.user_service.service.impl;
 
 import com.internship.user_service.constants.FilePath;
+import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.exception.*;
+import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.exception.PictureNotFoundException;
 import com.internship.user_service.exception.AlreadyExistsException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.mapper.UserMapper;
+import com.internship.user_service.model.Availability;
 import com.internship.user_service.model.User;
-import com.internship.user_service.model.enums.Status;
+import com.internship.user_service.repository.AvailabilityRepository;
 import com.internship.user_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,12 +45,19 @@ class UserServiceImplTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private AvailabilityRepository availabilityRepository;
+
+    @Mock
+    private AvailabilityMapper availabilityMapper;
+
     @InjectMocks
     private UserServiceImpl userService;
 
     private User user;
     private UserDTO userDTO;
     private UserResponse userResponse;
+    private AvailabilityDTO availabilityDTO;
 
     @BeforeEach
     void setUp() {
@@ -65,12 +78,15 @@ class UserServiceImplTest {
         userResponse.setName("Marko");
         userResponse.setSurname("Markovic");
         userResponse.setEmail("marko@internship.com");
+
+        availabilityDTO = new AvailabilityDTO();
+        availabilityDTO.setWorkerId(1L);
+        availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 8, 0));
+        availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
     }
 
     @Test
     void createUser() {
-        user.setStatus(Status.ACTIVE);
-        user.setVerified(false);
         when(userMapper.toUserEntity(userDTO)).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
@@ -86,8 +102,6 @@ class UserServiceImplTest {
         ArgumentCaptor<UserDTO> userDTOCaptor = ArgumentCaptor.forClass(UserDTO.class);
         verify(userMapper).toUserEntity(userDTOCaptor.capture());
         UserDTO capturedUserDTO = userDTOCaptor.getValue();
-        assertEquals(Status.ACTIVE, capturedUserDTO.getStatus());
-        assertFalse(capturedUserDTO.getVerified());
 
         verify(userMapper, times(1)).toUserEntity(userDTO);
         verify(userRepository, times(1)).save(user);
@@ -274,6 +288,53 @@ class UserServiceImplTest {
     }
 
     @Test
+    void gettingUsersAvailabilitiesUserNotFound(){
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.getAvailabilityForTheUser(anyLong()));
+    }
+
+    @Test
+    void throwExceptionWhenUserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void throwExceptionWhenStartTimeAfterEndTime() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 14, 0));
+        availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
+
+        assertThrows(InvalidTimeFormatException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void throwExceptionWhenUserIsBusy() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        Availability existingAvailability = new Availability();
+        existingAvailability.setStartTime(LocalDateTime.of(2025, 3, 25, 7, 0));
+        existingAvailability.setEndTime(LocalDateTime.of(2025, 3, 25, 13, 0));
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(availabilityRepository.findAllByUserId(1L)).thenReturn(List.of(existingAvailability));
+
+        assertThrows(UserUnavailableException.class, () -> userService.addAvailabilityToTheUser(availabilityDTO));
+    }
+
+    @Test
+    void shouldSaveAvailabilitySuccessfully() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(availabilityRepository.findAllByUserId(1L)).thenReturn(List.of());
+        Availability availability = new Availability();
+        when(availabilityMapper.toEntity(availabilityDTO)).thenReturn(availability);
+
+        assertDoesNotThrow(() -> userService.addAvailabilityToTheUser(availabilityDTO));
+        verify(availabilityRepository, times(1)).save(availability);
+    }
+
+    @Test
     void undoUserCreation_shouldReturnTrue_whenUserExists() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doNothing().when(userRepository).delete(user);
@@ -318,5 +379,74 @@ class UserServiceImplTest {
                 .hasMessage("User not found.");
 
         verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void updateUser_shouldUpdateUser_whenUserExists() {
+
+        userDTO.setId(1L);
+        userDTO.setName("Stefan");
+        userDTO.setSurname("Stefanovic");
+        userDTO.setBirthday(LocalDate.of(1990, 1, 1));
+        userDTO.setAddress("Address1");
+        userDTO.setPhone("123456789");
+        userDTO.setCountry("Macedonia");
+        userDTO.setCity("Warsaw");
+        userDTO.setZipCode("12345");
+
+
+        userResponse.setId(1L);
+        userResponse.setName("Stefan");
+        userResponse.setSurname("Stefanovic");
+        userResponse.setAddress("Address1");
+        userResponse.setPhone("123456789");
+        userResponse.setCountry("Macedonia");
+        userResponse.setCity("Warsaw");
+        userResponse.setZipCode("12345");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+
+        UserResponse result = userService.editUser(userDTO);
+
+        assertNotNull(result);
+        assertEquals(1, user.getId());
+        assertEquals("Stefan", user.getName());
+        assertEquals("Stefanovic", user.getSurname());
+        assertEquals("Address1", user.getAddress());
+        assertEquals("123456789", user.getPhone());
+        assertEquals("Macedonia", user.getCountry());
+        assertEquals("Warsaw", user.getCity());
+        assertEquals("12345", user.getZipCode());
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userMapper, times(1)).toUserResponse(user);
+    }
+
+    @Test
+    void updateUser_shouldThrowException_whenUserDoesNotExist() {
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
+                () -> userService.editUser(userDTO)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void updateUser_shouldThrowIllegalArgumentException_whenUserDTOHasIdNull() {
+
+        userDTO.setId(null);
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.editUser(userDTO)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User ID cannot be null", exception.getMessage());
     }
 }

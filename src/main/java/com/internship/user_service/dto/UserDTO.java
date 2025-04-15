@@ -1,7 +1,5 @@
 package com.internship.user_service.dto;
 
-
-import com.internship.user_service.model.enums.Status;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -58,9 +56,5 @@ public class UserDTO {
 
     private LocalDate created;
 
-    private Boolean verified;
-
     private String profilePicturePath;
-
-    private Status status;
 }

@@ -1,21 +1,23 @@
 package com.internship.user_service.model;
 
+import com.internship.user_service.enums.JobCategory;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 
+@Data
+@Builder
 @NoArgsConstructor
-@Getter
+@AllArgsConstructor
 @EqualsAndHashCode
 @Embeddable
 public class WantedCategoryId implements Serializable {
 
-    private String categoryId;
-    private Long preferenceId;
+    private JobCategory categoryId;
+    private Long preferencesId;
 
 }

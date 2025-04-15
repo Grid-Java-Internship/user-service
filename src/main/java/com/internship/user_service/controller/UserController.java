@@ -1,7 +1,9 @@
 package com.internship.user_service.controller;
 
+import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.model.Availability;
 import com.internship.user_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +65,29 @@ public class UserController {
     }
 
     /**
+     * Returns all availabilities for the user with given {@code id}.
+     * @param userId The id of the user
+     * @return A list of all availabilities for the user with given {@code id}
+     */
+    @GetMapping("/available/{id}")
+    public ResponseEntity<List<Availability>> getAvailabilityForTheUser(@PathVariable("id") Long userId){
+        return ResponseEntity.ok().body(userService.getAvailabilityForTheUser(userId));
+    }
+
+    /**
+     * Adds availability for the user based on the given {@link AvailabilityDTO}.
+     *
+     * @param availabilityDTO The availability data to be added for the user.
+     * @return A ResponseEntity with HTTP status OK if the availability is added successfully.
+     */
+    @PostMapping("/available")
+    public ResponseEntity<Void> addAvailability(@RequestBody @Valid AvailabilityDTO availabilityDTO){
+        userService.addAvailabilityToTheUser(availabilityDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Deletes the user with the given {@code id}.
      * @param id The id of the user
      * @return {@code true} if the user was deleted, {@code false} if the user was not found
@@ -71,5 +96,11 @@ public class UserController {
     public ResponseEntity<Boolean> deleteUser(@PathVariable Long id) {
         Boolean isDeleted = userService.undoUserCreation(id);
         return new ResponseEntity<>(isDeleted, HttpStatus.OK);
+    }
+
+    @PatchMapping("/editUser")
+    public ResponseEntity<UserResponse> editUser(@RequestBody @Valid UserDTO userDTO) {
+        UserResponse userResponse = userService.editUser(userDTO);
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 }
