@@ -34,4 +34,16 @@ public interface PreferenceService {
      * @return The updated preferences.
      */
     PreferencesDTO updatePreferences(PreferencesDTO preferenceDTO);
+
+    /**
+     * Returns the user preferences for the given user id.
+     * <p>
+     * If the user does not exist, a {@link UserNotFoundException} is thrown.
+     * <p>
+     * The method will return the {@link PreferencesDTO} for the given user.
+     * @param userId The id of the user.
+     * @return The user preferences.
+     * @throws UserNotFoundException If the user does not exist.
+     */
+    PreferencesDTO getPreferences(Long userId);
 }
