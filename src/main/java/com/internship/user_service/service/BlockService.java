@@ -1,5 +1,7 @@
 package com.internship.user_service.service;
 
+import java.util.List;
+
 public interface BlockService {
     /**
      * Adds a block relationship between the user with the given {@code userId} and
@@ -30,4 +32,6 @@ public interface BlockService {
      * @return {@code true} if the block relationship exists, or {@code false} if it does not.
      */
     boolean blockExists(Long userId, Long blockedUserId);
+
+    List<Long> getBlockedUsersByUserId(Long blockingUserId, int page, int pageSize);
 }

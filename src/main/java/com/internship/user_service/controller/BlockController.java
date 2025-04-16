@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/v1/blocks")
 @RequiredArgsConstructor
@@ -37,5 +39,13 @@ public class BlockController {
                                             @PathVariable Long blockedUserId) {
         blockService.unblockUser(userId, blockedUserId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{blockingUserId}")
+    public ResponseEntity<List<Long>> getBlockedUsersByUserId(
+            @PathVariable Long blockingUserId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(blockService.getBlockedUsersByUserId(blockingUserId, page, pageSize));
     }
 }
