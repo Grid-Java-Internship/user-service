@@ -3,6 +3,8 @@ package com.internship.user_service.dto;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalTime;
+
 @Setter
 @Getter
 @Builder
@@ -48,5 +50,9 @@ public class UserResponse {
     private String country;
 
     private String profilePicturePath;
+
+    private LocalTime startTime;
+
+    private LocalTime endTime;
 
 }
