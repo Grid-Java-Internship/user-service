@@ -4,6 +4,7 @@ import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.exception.PictureNotFoundException;
@@ -28,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +60,7 @@ class UserServiceImplTest {
     private UserDTO userDTO;
     private UserResponse userResponse;
     private AvailabilityDTO availabilityDTO;
+    private WorkingHoursRequest workingHoursRequest;
 
     @BeforeEach
     void setUp() {
@@ -83,6 +86,13 @@ class UserServiceImplTest {
         availabilityDTO.setWorkerId(1L);
         availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 8, 0));
         availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
+
+        workingHoursRequest = WorkingHoursRequest
+                .builder()
+                .userId(1L)
+                .startTime(LocalTime.of(8, 0))
+                .endTime(LocalTime.of(12, 0))
+                .build();
     }
 
     @Test
@@ -448,5 +458,66 @@ class UserServiceImplTest {
 
         assertNotNull(exception);
         assertEquals("User ID cannot be null", exception.getMessage());
+    }
+
+    @Test
+    void updateWorkingHours_shouldThrowException_whenUserDoesNotExist() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
+                () -> userService.updateWorkingHours(workingHoursRequest)
+        );
+
+        assertNotNull(exception);
+        assertEquals("User with id 1 was not found.", exception.getMessage());
+        verify(userRepository, times(1)).findById(1L);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void updateWorkingHours_shouldThrowConflictExceptionIfStartTimeIsAfterEndTime() {
+        workingHoursRequest.setEndTime(LocalTime.of(7, 0));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> userService.updateWorkingHours(workingHoursRequest)
+        );
+
+        assertNotNull(exception);
+        assertEquals("Start time must be before end time.", exception.getMessage());
+        verify(userRepository, times(1)).findById(1L);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void updateWorkingHours_shouldThrowConflictException() {
+        workingHoursRequest.setEndTime(LocalTime.of(8, 25));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> userService.updateWorkingHours(workingHoursRequest)
+        );
+
+        assertNotNull(exception);
+        assertEquals("Your working hours must be at least 30 minutes.", exception.getMessage());
+        verify(userRepository, times(1)).findById(1L);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void updateWorkingHours_shouldBeSuccessful() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        Boolean result = userService.updateWorkingHours(workingHoursRequest);
+
+        assertNotNull(result);
+        assertTrue(result);
+        assertEquals(workingHoursRequest.getStartTime(), user.getStartTime());
+        assertEquals(workingHoursRequest.getEndTime(), user.getEndTime());
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).save(user);
     }
 }
