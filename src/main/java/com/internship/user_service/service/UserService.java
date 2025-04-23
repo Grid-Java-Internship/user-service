@@ -73,4 +73,6 @@ public interface UserService {
      * @throws UserNotFoundException if the user with the specified ID does not exist.
      */
     User getUserEntity(Long userId);
+
+    boolean checkIfPhoneExists(String phoneNumber);
 }

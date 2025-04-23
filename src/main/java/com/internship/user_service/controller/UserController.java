@@ -103,4 +103,10 @@ public class UserController {
         UserResponse userResponse = userService.editUser(userDTO);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
+
+    @GetMapping("/exists/by-phone")
+    public ResponseEntity<Boolean> checkUserExistsByPhone(@RequestParam("phone") String phoneNumber) {
+        boolean exists = userService.checkIfPhoneExists(phoneNumber);
+        return ResponseEntity.ok(exists);
+    }
 }
