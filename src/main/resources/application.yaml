@@ -18,9 +18,9 @@ spring:
     host: ${RABBITMQ_HOST:rabbitmq}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
-
   config:
     import: classpath:env.properties
+
 logging:
   pattern:
     console: "${LOG_PATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n}"
@@ -32,6 +32,16 @@ management:
         include: "*"
 server:
   port: 8081
+  forward-headers-strategy: framework
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL:http://eureka-naming-server:8761/eureka}
 
 configs:
   rabbitmq:
