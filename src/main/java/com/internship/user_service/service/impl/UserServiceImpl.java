@@ -202,7 +202,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean updateWorkingHours(WorkingHoursRequest request) {
+    public void updateWorkingHours(WorkingHoursRequest request) {
 
         Long userId = request.getUserId();
         LocalTime startTime = request.getStartTime();
@@ -227,8 +227,6 @@ public class UserServiceImpl implements UserService {
         user.setEndTime(endTime);
 
         userRepository.save(user);
-
-        return true;
     }
 
     @Override

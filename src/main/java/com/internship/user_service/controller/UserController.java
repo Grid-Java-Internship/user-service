@@ -106,9 +106,9 @@ public class UserController {
     }
 
     @PatchMapping("/workingHours")
-    public ResponseEntity<Boolean> updateWorkingHours(@RequestBody @Valid WorkingHoursRequest request) {
-        Boolean isUpdated = userService.updateWorkingHours(request);
-        return new ResponseEntity<>(isUpdated, HttpStatus.OK);
+    public ResponseEntity<Void> updateWorkingHours(@RequestBody @Valid WorkingHoursRequest request) {
+        userService.updateWorkingHours(request);
+        return ResponseEntity.noContent().build();
     }
 
 }

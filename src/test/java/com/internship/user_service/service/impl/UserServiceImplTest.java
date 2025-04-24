@@ -511,10 +511,8 @@ class UserServiceImplTest {
     void updateWorkingHours_shouldBeSuccessful() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        Boolean result = userService.updateWorkingHours(workingHoursRequest);
+        userService.updateWorkingHours(workingHoursRequest);
 
-        assertNotNull(result);
-        assertTrue(result);
         assertEquals(workingHoursRequest.getStartTime(), user.getStartTime());
         assertEquals(workingHoursRequest.getEndTime(), user.getEndTime());
         verify(userRepository, times(1)).findById(1L);

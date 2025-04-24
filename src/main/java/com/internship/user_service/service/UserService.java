@@ -75,5 +75,5 @@ public interface UserService {
      */
     User getUserEntity(Long userId);
 
-    Boolean updateWorkingHours(WorkingHoursRequest request);
+    void updateWorkingHours(WorkingHoursRequest request);
 }
