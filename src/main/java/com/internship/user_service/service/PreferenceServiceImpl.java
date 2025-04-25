@@ -24,10 +24,6 @@ public class PreferenceServiceImpl implements PreferenceService {
     @Override
     @Transactional
     public PreferencesDTO setPreferences(PreferencesDTO preferenceDTO) {
-
-//        User user = userRepository.findById(preferenceDTO.getUserId())
-//                .orElseThrow(() -> new UserNotFoundException("User not found."));
-
         User user = userRepository.findById(Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()))
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 

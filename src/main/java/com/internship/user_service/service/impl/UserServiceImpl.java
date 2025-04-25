@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +43,6 @@ public class UserServiceImpl implements UserService {
     private final String uploadDir = System.getProperty("user.dir") + FilePath.PATH;
     private final AvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
-
     private String getFileExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
@@ -64,7 +64,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse addProfilePicture(Long userId, MultipartFile file) {
+    public UserResponse addProfilePicture( MultipartFile file) {
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> {

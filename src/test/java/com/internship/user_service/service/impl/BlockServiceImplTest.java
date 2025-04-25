@@ -16,6 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +47,9 @@ class BlockServiceImplTest {
     private BlockId blockId;
     private Block block;
 
+    Authentication authentication = mock(Authentication.class);
+    SecurityContext securityContext = mock(SecurityContext.class);
+
     private static final Long USER_ID = 1L;
     private static final Long BLOCKED_USER_ID = 2L;
     private static final Long NON_EXISTENT_USER_ID = 99L;
@@ -61,6 +71,12 @@ class BlockServiceImplTest {
         blockId = new BlockId(USER_ID, BLOCKED_USER_ID);
 
         block = new Block(blockId, user, blockedUser);
+
+        when(authentication.getPrincipal()).thenReturn("1");
+        Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        when(authentication.getAuthorities()).thenReturn(authorities);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Nested
@@ -75,10 +91,10 @@ class BlockServiceImplTest {
             when(blockRepository.existsById(blockId)).thenReturn(false);
             when(blockRepository.save(any(Block.class))).thenReturn(block);
             when(favoriteService.favoriteExists(USER_ID, BLOCKED_USER_ID)).thenReturn(true);
-            doNothing().when(favoriteService).deleteFavorite(USER_ID, BLOCKED_USER_ID);
+            doNothing().when(favoriteService).deleteFavorite(BLOCKED_USER_ID);
 
             // Act
-            blockService.blockUser(USER_ID, BLOCKED_USER_ID);
+            blockService.blockUser(BLOCKED_USER_ID);
 
             // Assert & Verify interactions
             verify(userService).getUserEntity(USER_ID);
@@ -90,7 +106,7 @@ class BlockServiceImplTest {
                     b.getBlockedUser().equals(blockedUser)
             ));
             verify(favoriteService).favoriteExists(USER_ID, BLOCKED_USER_ID);
-            verify(favoriteService).deleteFavorite(USER_ID, BLOCKED_USER_ID);
+            verify(favoriteService).deleteFavorite(BLOCKED_USER_ID);
             verifyNoMoreInteractions(userService, blockRepository, favoriteService);
         }
 
@@ -105,7 +121,7 @@ class BlockServiceImplTest {
             when(favoriteService.favoriteExists(USER_ID, BLOCKED_USER_ID)).thenReturn(false);
 
             // Act
-            blockService.blockUser(USER_ID, BLOCKED_USER_ID);
+            blockService.blockUser(BLOCKED_USER_ID);
 
             // Assert & Verify interactions
             verify(userService).getUserEntity(USER_ID);
@@ -113,7 +129,7 @@ class BlockServiceImplTest {
             verify(blockRepository).existsById(blockId);
             verify(blockRepository).save(any(Block.class));
             verify(favoriteService).favoriteExists(USER_ID, BLOCKED_USER_ID);
-            verify(favoriteService, never()).deleteFavorite(anyLong(), anyLong());
+            verify(favoriteService, never()).deleteFavorite(anyLong());
             verifyNoMoreInteractions(userService, blockRepository, favoriteService);
         }
 
@@ -126,7 +142,7 @@ class BlockServiceImplTest {
             when(blockRepository.existsById(blockId)).thenReturn(true);
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(USER_ID, BLOCKED_USER_ID))
+            assertThatThrownBy(() -> blockService.blockUser(BLOCKED_USER_ID))
                     .isInstanceOf(AlreadyExistsException.class)
                     .hasMessage("Block relationship already exists.");
 
@@ -143,16 +159,16 @@ class BlockServiceImplTest {
         @DisplayName("Should throw UserNotFoundException when blocking user does not exist")
         void blockUser_userNotFound() {
             // Arrange
-            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+            when(userService.getUserEntity(anyLong())).thenThrow(
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(NON_EXISTENT_USER_ID, BLOCKED_USER_ID))
+            assertThatThrownBy(() -> blockService.blockUser(BLOCKED_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService).getUserEntity(anyLong());
             verify(userService, never()).getUserEntity(BLOCKED_USER_ID);
             verifyNoMoreInteractions(userService);
             verifyNoInteractions(blockRepository, favoriteService);
@@ -167,7 +183,7 @@ class BlockServiceImplTest {
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(USER_ID, NON_EXISTENT_USER_ID))
+            assertThatThrownBy(() -> blockService.blockUser(NON_EXISTENT_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
@@ -182,9 +198,13 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null userId")
         void blockUser_nullUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(null, BLOCKED_USER_ID))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("Invalid userId or blockedUserId.");
+            when(authentication.getPrincipal()).thenReturn(null);
+            Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            when(authentication.getAuthorities()).thenReturn(authorities);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+            assertThatThrownBy(() -> blockService.blockUser(BLOCKED_USER_ID))
+                    .isInstanceOf(NumberFormatException.class);
 
             // Verify interactions
             verifyNoInteractions(userService, blockRepository, favoriteService);
@@ -194,7 +214,7 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null blockedUserId")
         void blockUser_nullBlockedUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(USER_ID, null))
+            assertThatThrownBy(() -> blockService.blockUser(null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or blockedUserId.");
 
@@ -206,7 +226,7 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException when userId equals blockedUserId")
         void blockUser_sameUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.blockUser(USER_ID, USER_ID))
+            assertThatThrownBy(() -> blockService.blockUser(USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or blockedUserId.");
 
@@ -228,7 +248,7 @@ class BlockServiceImplTest {
             doNothing().when(blockRepository).deleteById(blockId);
 
             // Act
-            blockService.unblockUser(USER_ID, BLOCKED_USER_ID);
+            blockService.unblockUser(BLOCKED_USER_ID);
 
             // Assert & Verify interactions
             verify(userService).getUserEntity(USER_ID);
@@ -248,7 +268,7 @@ class BlockServiceImplTest {
             when(blockRepository.existsById(blockId)).thenReturn(false);
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(USER_ID, BLOCKED_USER_ID))
+            assertThatThrownBy(() -> blockService.unblockUser(BLOCKED_USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Block relationship does not exist.");
 
@@ -264,17 +284,18 @@ class BlockServiceImplTest {
         @Test
         @DisplayName("Should throw UserNotFoundException when blocking user does not exist")
         void unblockUser_userNotFound() {
+
             // Arrange
-            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+            when(userService.getUserEntity(anyLong())).thenThrow(
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(NON_EXISTENT_USER_ID, BLOCKED_USER_ID))
+            assertThatThrownBy(() -> blockService.unblockUser(BLOCKED_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService).getUserEntity(anyLong());
             verifyNoInteractions(blockRepository, favoriteService);
             verifyNoMoreInteractions(userService);
         }
@@ -288,7 +309,7 @@ class BlockServiceImplTest {
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(USER_ID, NON_EXISTENT_USER_ID))
+            assertThatThrownBy(() -> blockService.unblockUser(NON_EXISTENT_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
@@ -303,9 +324,15 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null userId")
         void unblockUser_nullUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(null, BLOCKED_USER_ID))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("Invalid userId or blockedUserId.");
+
+            when(authentication.getPrincipal()).thenReturn(null);
+            Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            when(authentication.getAuthorities()).thenReturn(authorities);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() -> blockService.unblockUser(BLOCKED_USER_ID))
+                    .isInstanceOf(NumberFormatException.class);
 
             // Verify no interactions happened
             verifyNoInteractions(userService, blockRepository, favoriteService);
@@ -315,7 +342,7 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null blockedUserId")
         void unblockUser_nullBlockedUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(USER_ID, null))
+            assertThatThrownBy(() -> blockService.unblockUser(null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or blockedUserId.");
 
@@ -327,7 +354,7 @@ class BlockServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException when userId equals blockedUserId")
         void unblockUser_sameUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> blockService.unblockUser(USER_ID, USER_ID))
+            assertThatThrownBy(() -> blockService.unblockUser(USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or blockedUserId.");
 

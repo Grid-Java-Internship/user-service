@@ -22,12 +22,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +58,9 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    Authentication authentication = mock(Authentication.class);
+    SecurityContext securityContext = mock(SecurityContext.class);
 
     private User user;
     private UserDTO userDTO;
@@ -83,6 +91,12 @@ class UserServiceImplTest {
         availabilityDTO.setWorkerId(1L);
         availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 8, 0));
         availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
+
+        when(authentication.getPrincipal()).thenReturn("1");
+        Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        when(authentication.getAuthorities()).thenReturn(authorities);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
@@ -188,7 +202,7 @@ class UserServiceImplTest {
                 "image/jpeg", new byte[10]);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> userService.addProfilePicture(1L, file));
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> userService.addProfilePicture(file));
         assertEquals("User not found.", exception.getMessage());
 
         verify(userRepository, times(1)).findById(1L);
@@ -202,8 +216,8 @@ class UserServiceImplTest {
         MultipartFile emptyFile = new MockMultipartFile("file", "profile.jpg",
                 "image/jpeg", new byte[0]);
 
-        PictureNotFoundException firstException = assertThrows(PictureNotFoundException.class, () -> userService.addProfilePicture(1L, null));
-        PictureNotFoundException secondException = assertThrows(PictureNotFoundException.class, () -> userService.addProfilePicture(1L, emptyFile));
+        PictureNotFoundException firstException = assertThrows(PictureNotFoundException.class, () -> userService.addProfilePicture(null));
+        PictureNotFoundException secondException = assertThrows(PictureNotFoundException.class, () -> userService.addProfilePicture(emptyFile));
         assertEquals("Profile picture is missing!", firstException.getMessage());
         assertEquals("Profile picture is missing!", secondException.getMessage());
 
@@ -220,7 +234,7 @@ class UserServiceImplTest {
         doThrow(new IOException()).when(mockIOExceptionFile).transferTo(any(File.class));
 
         PictureNotFoundException exception = assertThrows(PictureNotFoundException.class,
-                () -> userService.addProfilePicture(1L, mockIOExceptionFile));
+                () -> userService.addProfilePicture(mockIOExceptionFile));
         assertEquals("IO Exception occurred while uploading profile picture!", exception.getMessage());
 
         verify(userRepository, times(1)).findById(1L);
@@ -240,11 +254,11 @@ class UserServiceImplTest {
         when(mockNullFile.getOriginalFilename()).thenReturn(null);
 
         PictureNotFoundException firstException = assertThrows(PictureNotFoundException.class,
-                () -> userService.addProfilePicture(1L, mockInvalidFileExtension));
+                () -> userService.addProfilePicture(mockInvalidFileExtension));
         assertEquals("Invalid file type!", firstException.getMessage());
 
         PictureNotFoundException secondException = assertThrows(PictureNotFoundException.class,
-                () -> userService.addProfilePicture(1L, mockNullFile));
+                () -> userService.addProfilePicture(mockNullFile));
         assertEquals("Invalid file type!", secondException.getMessage());
 
         verify(userRepository, times(2)).findById(1L);
@@ -265,7 +279,7 @@ class UserServiceImplTest {
         when(mockFile.getOriginalFilename()).thenReturn("valid-image.jpg");
         doNothing().when(mockFile).transferTo(any(File.class));
 
-        UserResponse result = userService.addProfilePicture(1L, mockFile);
+        UserResponse result = userService.addProfilePicture(mockFile);
 
         assertNotNull(result);
         assertEquals(1, result.getId());
