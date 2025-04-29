@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-service-service
-  namespace: hire-a-handyman
+  namespace: hah
 spec:
   selector:
     app: user-service
