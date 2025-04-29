@@ -197,6 +197,12 @@ public class UserServiceImpl implements UserService {
             return new UserNotFoundException("User not found.");
         });
     }
+
+    @Override
+    public boolean checkIfPhoneExists(String phoneNumber) {
+        return userRepository.checkIfPhoneExists(phoneNumber);
+    }
+
     @Override
     @Transactional
     public UserResponse editUser(UserDTO userDTO) {
