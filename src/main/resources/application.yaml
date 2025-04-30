@@ -72,6 +72,8 @@ security:
         pattern: /v1/preferences
 
       - method: PATCH
+        pattern: /v1/users/workingHours
+      - method: PATCH
         pattern: /v1/users/editUser
       - method: PATCH
         pattern: /v1/users/{id}/addProfilePicture

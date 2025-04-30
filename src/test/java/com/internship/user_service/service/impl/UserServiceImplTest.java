@@ -23,6 +23,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -62,6 +65,9 @@ class UserServiceImplTest {
     private AvailabilityDTO availabilityDTO;
     private WorkingHoursRequest workingHoursRequest;
 
+    private Authentication authentication = mock(Authentication.class);
+    private SecurityContext securityContext = mock(SecurityContext.class);
+
     @BeforeEach
     void setUp() {
         user = new User();
@@ -89,10 +95,13 @@ class UserServiceImplTest {
 
         workingHoursRequest = WorkingHoursRequest
                 .builder()
-                .userId(1L)
                 .startTime(LocalTime.of(8, 0))
                 .endTime(LocalTime.of(12, 0))
                 .build();
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn("1");
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test

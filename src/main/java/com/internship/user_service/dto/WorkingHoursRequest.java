@@ -13,9 +13,6 @@ import java.time.LocalTime;
 @NoArgsConstructor
 public class WorkingHoursRequest {
 
-    @NotNull(message = "User id is mandatory.")
-    private Long userId;
-
     @NotNull(message = "Start time is mandatory.")
     private LocalTime startTime;
 

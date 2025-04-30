@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -210,7 +211,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateWorkingHours(WorkingHoursRequest request) {
 
-        Long userId = request.getUserId();
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
         LocalTime startTime = request.getStartTime();
         LocalTime endTime = request.getEndTime();
 
@@ -262,8 +264,5 @@ public class UserServiceImpl implements UserService {
         log.info("User with id {} updated successfully.", user.getId());
         return userMapper.toUserResponse(user);
     }
-
-
-
 
 }
