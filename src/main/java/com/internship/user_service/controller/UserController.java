@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -38,9 +40,15 @@ public class UserController {
      * @return The updated user
      */
     @PatchMapping("/{id}/addProfilePicture")
-    public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestPart("file") MultipartFile file) {
+    public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestPart("file") MultipartFile file) throws IOException {
         UserResponse userResponse = userService.addProfilePicture(id, file);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/deleteProfilePicture")
+    public ResponseEntity<Boolean> deleteProfilePicture(@PathVariable Long id) {
+        Boolean deleted = userService.deleteProfilePicture(id);
+        return ResponseEntity.ok(deleted);
     }
 
     /**

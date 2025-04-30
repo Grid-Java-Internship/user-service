@@ -9,6 +9,7 @@ import com.internship.user_service.model.Availability;
 import com.internship.user_service.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
@@ -30,7 +31,28 @@ public interface UserService {
      * @throws UserNotFoundException if the user with the specified ID does not exist.
      * @throws PictureNotFoundException if the file is empty or not a valid image type.
      */
-    UserResponse addProfilePicture(Long id, MultipartFile file);
+    UserResponse addProfilePicture(Long id, MultipartFile file) throws IOException;
+
+    /**
+     * Deletes the profile picture associated with the user with the given ID.
+     * <p>
+     * If the user with the given ID does not exist, a {@link UserNotFoundException} is thrown.
+     * <p>
+     * The method will return true if the profile picture was successfully deleted, or false if the user with the given id does not exist.
+     * @param id The ID of the user for whom the profile picture is to be deleted.
+     * @return {@code true} if the profile picture was successfully deleted, or {@code false} if the user with the given id does not exist.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     */
+    Boolean deleteProfilePicture(Long id);
+
+    /**
+     * Deletes the profile picture with the specified name.
+     *
+     * @param user User whose picture we are deleting
+     * @return {@code true} if the profile picture was successfully deleted, or {@code false} if the picture does not exist.
+     * @throws IllegalArgumentException if the pictureName is null or empty.
+     */
+    Boolean deleteProfilePicture(User user);
 
     /**
      * Returns the user with the specified ID.

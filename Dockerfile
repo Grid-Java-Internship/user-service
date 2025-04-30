@@ -15,7 +15,7 @@ COPY . .
 RUN mvn package -DskipTests
 
 # lightweight image for runtime
-FROM eclipse-temurin:17-jdk-alpine AS runtime
+FROM eclipse-temurin:17-jre-jammy AS runtime
 
 RUN addgroup --system --gid 1001 spring && \
     adduser --system --uid 1001 spring && \

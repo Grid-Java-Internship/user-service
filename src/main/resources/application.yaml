@@ -20,6 +20,13 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
   config:
     import: classpath:env.properties
+  cloud:
+    gcp:
+      project-id: gd-gcp-internship-cd
+
+gcs:
+  bucket:
+    name: "hah-image-bucket"
 
 logging:
   pattern:
@@ -41,9 +48,11 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_SERVICE_URL:http://eureka-naming-server-service:8761/eureka}
+      defaultZone: ${EUREKA_SERVICE_URL:http://eureka-naming-server:8761/eureka}
 
 configs:
   rabbitmq:
     queues:
       deleteUser: "deletePendingUserQueue"
+
+

@@ -1,5 +1,8 @@
 package com.internship.user_service.service.impl;
 
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.exception.*;
@@ -18,6 +21,7 @@ import jakarta.transaction.Transactional;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,11 +41,14 @@ import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private final Storage storage;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final String uploadDir = System.getProperty("user.dir") + FilePath.PATH;
     private final AvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
+
+    @Value("${gcs.bucket.name}")
+    private String bucketName;
 
     private String getFileExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
@@ -64,7 +71,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse addProfilePicture(Long userId, MultipartFile file) {
+    public UserResponse addProfilePicture(Long userId, MultipartFile file) throws IOException {
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> {
@@ -85,19 +92,45 @@ public class UserServiceImpl implements UserService {
         }
 
         String fileName = "pictureUserId_" + userId + "." + getFileExtension(originalFilename);
-        Path filePath = Paths.get(uploadDir).resolve(fileName);
 
-        try {
-            file.transferTo(filePath.toFile());
-        } catch (IOException e) {
-            log.error("IO Exception occurred while uploading profile picture!");
-            throw new PictureNotFoundException("IO Exception occurred while uploading profile picture!");
-        }
+        BlobId blobId = BlobId.of(bucketName, fileName);
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+
+        storage.create(blobInfo, file.getBytes());
 
         user.setProfilePicturePath(fileName);
         User savedUser = userRepository.save(user);
         log.info("Profile picture added for user with id {}.", userId);
         return userMapper.toUserResponse(savedUser);
+    }
+
+    @Override
+    public Boolean deleteProfilePicture(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+
+        return deleteProfilePicture(user);
+    }
+
+    @Override
+    public Boolean deleteProfilePicture(User user) {
+
+        if (!user.getProfilePicturePath().isBlank()) {
+            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath());
+            boolean deleted = storage.delete(blobId);
+
+            if (deleted) {
+                log.info("Image deleted for user {}.", user.getId());
+            } else {
+                log.error("Image deletion failed for user {}.", user.getId());
+            }
+            return deleted;
+        }
+
+        return false;
     }
 
     @Override
@@ -186,7 +219,10 @@ public class UserServiceImpl implements UserService {
                 new UserNotFoundException("User not found.")
         );
 
+        deleteProfilePicture(user);
+
         userRepository.delete(user);
+
         return true;
     }
 
@@ -230,5 +266,7 @@ public class UserServiceImpl implements UserService {
         log.info("User with id {} updated successfully.", user.getId());
         return userMapper.toUserResponse(user);
     }
+
+
 
 }

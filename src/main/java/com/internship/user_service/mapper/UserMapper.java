@@ -6,13 +6,13 @@ import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring",
-        imports = FilePath.class)
+        imports = FilePath.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
 
-    @Mapping(target = "profilePicturePath",
-            expression = "java(user.getProfilePicturePath() != null ? FilePath.PATH_PICTURE_URL + user.getProfilePicturePath() : null)")
     UserResponse toUserResponse(User user);
 
     User toUserEntity(UserDTO userDTO);
