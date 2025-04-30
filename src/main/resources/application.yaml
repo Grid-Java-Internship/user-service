@@ -39,7 +39,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_SERVICE_URL:http://eureka-naming-server-service:8761/eureka}
+      defaultZone: ${EUREKA_SERVICE_URL:http://eureka-naming-server:8761/eureka}
 
 configs:
   rabbitmq:
@@ -65,6 +65,8 @@ security:
 
       - method: POST
         pattern: /v1/users/createUser
+      - method: GET
+        pattern: /v1/users/exists/by-phone
     permittedRequestsForUsersOrAdminOrSuperAdmin:
       - method: PUT
         pattern: /v1/preferences
@@ -96,8 +98,6 @@ security:
       - method: DELETE
         pattern: /v1/blocks/{userId}/{blockedUserId}
     permittedRequestsForAdminOrSuperAdmin:
-      - method: GET
-        pattern: /v1/users/exists/by-phone
       - method: GET
         pattern: /v1/users
     permittedRequestForSuperAdmin: [ ]
