@@ -80,16 +80,22 @@ security:
       - method: POST
         pattern: /v1/users/available
 
+      - method: GET
+        pattern: /v1/favorites
       - method: POST
         pattern: /v1/favorites/{userId}/{favoriteUserId}
       - method: DELETE
         pattern: /v1/favorites/{userId}/{favoriteUserId}
 
+      - method: GET
+        pattern: /v1/blocks/{blockingUserId}
       - method: POST
         pattern: /v1/blocks/{userId}/{blockedUserId}
       - method: DELETE
         pattern: /v1/blocks/{userId}/{blockedUserId}
     permittedRequestsForAdminOrSuperAdmin:
+      - method: GET
+        pattern: /v1/users/exists/by-phone
       - method: GET
         pattern: /v1/users
     permittedRequestForSuperAdmin: [ ]
