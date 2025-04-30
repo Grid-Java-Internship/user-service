@@ -4,9 +4,9 @@ spring:
   application:
     name: "${SPRING_APP_NAME:user-service}"
   datasource:
-    url: "jdbc:${DB_TYPE}://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:user_service}"
-    username: "${DB_USER}"
-    password: "${DB_PASS}"
+    url: "jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:user_service}"
+    username: "${DB_USER:pgAdmin}"
+    password: "${DB_PASS:password}"
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,8 +18,6 @@ spring:
     host: ${RABBITMQ_HOST:rabbitmq}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
-  config:
-    import: classpath:env.properties
 
 logging:
   pattern:
@@ -47,3 +45,51 @@ configs:
   rabbitmq:
     queues:
       deleteUser: "deletePendingUserQueue"
+
+# TODO: Change this when OpenFeign communication is updated with inter-service token authentication
+security:
+  paths:
+    permittedRequestsForAllUsers:
+      - method: GET
+        pattern: /v1/users/{id}
+      - method: GET
+        pattern: /v1/users/available/{id}
+
+      # TODO: Remove when auth library gets updated
+      - method: GET
+        pattern: "/actuator/**"
+      - method: GET
+        pattern: "/swagger-ui/**"
+      - method: GET
+        pattern: "/v3/api-docs/**"
+
+      - method: POST
+        pattern: /v1/users/createUser
+    permittedRequestsForUsersOrAdminOrSuperAdmin:
+      - method: PUT
+        pattern: /v1/preferences
+      - method: POST
+        pattern: /v1/preferences
+
+      - method: PATCH
+        pattern: /v1/users/editUser
+      - method: PATCH
+        pattern: /v1/users/{id}/addProfilePicture
+      - method: DELETE
+        pattern: /v1/users/deleteUser/{id}
+      - method: POST
+        pattern: /v1/users/available
+
+      - method: POST
+        pattern: /v1/favorites/{userId}/{favoriteUserId}
+      - method: DELETE
+        pattern: /v1/favorites/{userId}/{favoriteUserId}
+
+      - method: POST
+        pattern: /v1/blocks/{userId}/{blockedUserId}
+      - method: DELETE
+        pattern: /v1/blocks/{userId}/{blockedUserId}
+    permittedRequestsForAdminOrSuperAdmin:
+      - method: GET
+        pattern: /v1/users
+    permittedRequestForSuperAdmin: [ ]
