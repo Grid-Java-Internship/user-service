@@ -3,6 +3,7 @@ package com.internship.user_service.controller;
 import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.model.Availability;
 import com.internship.user_service.service.UserService;
 import jakarta.validation.Valid;
@@ -109,4 +110,11 @@ public class UserController {
         boolean exists = userService.checkIfPhoneExists(phoneNumber);
         return ResponseEntity.ok(exists);
     }
+
+    @PatchMapping("/workingHours")
+    public ResponseEntity<Void> updateWorkingHours(@RequestBody @Valid WorkingHoursRequest request) {
+        userService.updateWorkingHours(request);
+        return ResponseEntity.noContent().build();
+    }
+
 }

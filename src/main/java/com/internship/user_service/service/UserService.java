@@ -3,6 +3,7 @@ package com.internship.user_service.service;
 import com.internship.user_service.dto.AvailabilityDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.exception.PictureNotFoundException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.model.Availability;
@@ -75,4 +76,6 @@ public interface UserService {
     User getUserEntity(Long userId);
 
     boolean checkIfPhoneExists(String phoneNumber);
+
+    void updateWorkingHours(WorkingHoursRequest request);
 }

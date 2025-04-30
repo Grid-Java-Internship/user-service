@@ -2,6 +2,7 @@ package com.internship.user_service.service.impl;
 
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.exception.PictureNotFoundException;
@@ -24,7 +25,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -203,6 +206,35 @@ public class UserServiceImpl implements UserService {
         return userRepository.checkIfPhoneExists(phoneNumber);
     }
 
+
+    @Override
+    public void updateWorkingHours(WorkingHoursRequest request) {
+
+        Long userId = request.getUserId();
+        LocalTime startTime = request.getStartTime();
+        LocalTime endTime = request.getEndTime();
+
+        User user = userRepository.findById(userId).orElseThrow(() ->
+            new UserNotFoundException("User with id " + userId + " was not found.")
+        );
+
+        if(startTime.isAfter(endTime)) {
+            throw new ConflictException("Start time must be before end time.");
+        }
+
+        Duration duration = Duration.between(startTime, endTime);
+
+        if(duration.toMinutes() < 30) {
+            throw new ConflictException("Your working hours must be at least 30 minutes.");
+        }
+
+        user.setStartTime(startTime);
+
+        user.setEndTime(endTime);
+
+        userRepository.save(user);
+    }
+
     @Override
     @Transactional
     public UserResponse editUser(UserDTO userDTO) {
@@ -230,5 +262,8 @@ public class UserServiceImpl implements UserService {
         log.info("User with id {} updated successfully.", user.getId());
         return userMapper.toUserResponse(user);
     }
+
+
+
 
 }
