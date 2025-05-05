@@ -135,18 +135,21 @@ public class UserServiceImpl implements UserService {
 
         if (pictureName.isBlank()) {
             log.info("User {} doesn't have a profile picture.", userId);
+            throw new UserNotFoundException("User " + userId + " doesn't have profile picture.");
         }
 
         log.info("Fetching profile picture for user {}.", userId);
 
         try {
             BlobId blobId = BlobId.of(bucketName, pictureName);
-
             Blob blob = storage.get(blobId);
 
             if (blob == null || !blob.exists()) {
                 log.error("Picture file {} not found in GCS bucket {} for user {}.", pictureName, bucketName, userId);
-                throw new UserNotFoundException("Profile picture not found in cloud storage.");
+                throw new UserNotFoundException("Profile picture " +
+                        user.getProfilePicturePath() +
+                        " not found in cloud storage."
+                );
             }
 
             ImageDTO imageDTO = ImageDTO.builder().image(blob.getContent()).build();
