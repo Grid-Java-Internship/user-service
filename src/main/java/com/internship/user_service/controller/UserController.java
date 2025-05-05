@@ -1,12 +1,14 @@
 package com.internship.user_service.controller;
 
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.ImageDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.model.Availability;
 import com.internship.user_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,10 +47,31 @@ public class UserController {
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
+    /**
+     * Deletes the profile picture of the user with the given {@code id}.
+     * @param id The id of the user
+     * @return {@code true} if the profile picture was deleted, {@code false} if the user with the given id does not exist
+     */
     @DeleteMapping("/{id}/deleteProfilePicture")
     public ResponseEntity<Boolean> deleteProfilePicture(@PathVariable Long id) {
         Boolean deleted = userService.deleteProfilePicture(id);
         return ResponseEntity.ok(deleted);
+    }
+
+    /**
+     * Returns the profile picture of the user with the given {@code id}.
+     * @param id The id of the user
+     * @return The profile picture
+     */
+    @GetMapping("/{id}/getProfilePicture")
+    public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long id) {
+        ImageDTO imageDTO = userService.getProfilePicture(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(imageDTO.mediaType);
+        headers.setContentLength(imageDTO.image.length);
+
+        return new ResponseEntity<>(imageDTO.image, headers, HttpStatus.OK);
     }
 
     /**

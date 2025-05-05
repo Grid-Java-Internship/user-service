@@ -1,9 +1,12 @@
 package com.internship.user_service.service;
 
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.ImageDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
+import com.internship.user_service.exception.ServiceUnavailableException;
 import com.internship.user_service.exception.PictureNotFoundException;
+import com.internship.user_service.exception.UserUnavailableException;
 import com.internship.user_service.exception.UserNotFoundException;
 import com.internship.user_service.model.Availability;
 import com.internship.user_service.model.User;
@@ -46,6 +49,19 @@ public interface UserService {
     Boolean deleteProfilePicture(Long id);
 
     /**
+     * Retrieves the profile picture of the user with the specified ID.
+     * <p>
+     * If the user does not have a profile picture, an empty image will be returned.
+     * </p>
+     *
+     * @param userId The ID of the user whose profile picture is to be retrieved.
+     * @return An ImageDTO containing the profile picture of the user.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     * @throws ServiceUnavailableException if there is an error accessing the storage service.
+     */
+    ImageDTO getProfilePicture(Long userId);
+
+    /**
      * Deletes the profile picture with the specified name.
      *
      * @param user User whose picture we are deleting
@@ -70,8 +86,26 @@ public interface UserService {
      */
     List<UserResponse> getAllUsers();
 
+    /**
+     * Retrieves all availabilities for the user with the specified ID.
+     * <p>
+     * If the list of availabilities is empty, that means that the user is available
+     * for the proposed time.
+     * </p>
+     *
+     * @param userId The ID of the user for whom to retrieve the availabilities.
+     * @return A list of all availabilities for the user with the specified {@code userId}.
+     */
     List<Availability> getAvailabilityForTheUser(Long userId);
 
+    /**
+     * Adds availability for the user with the specified {@code userId} based on the
+     * given {@link AvailabilityDTO}.
+     *
+     * @param availabilityDTO The availability data to be added for the user.
+     * @throws UserNotFoundException if the user with the given ID does not exist.
+     * @throws UserUnavailableException if the user is already busy in that time.
+     */
     void addAvailabilityToTheUser(AvailabilityDTO availabilityDTO);
 
     /**
@@ -83,6 +117,16 @@ public interface UserService {
      */
     Boolean undoUserCreation(Long id);
 
+    /**
+     * Edits the user with the given ID, using the provided UserDTO object.
+     * <p>
+     * If the user with the given ID does not exist, a UserNotFoundException is thrown.
+     * </p>
+     *
+     * @param userDTO The user data to be used for the edit operation.
+     * @return A UserResponse containing the updated user data.
+     * @throws UserNotFoundException if the user with the specified ID does not exist.
+     */
     UserResponse editUser(UserDTO userDTO);
 
     /**
@@ -96,5 +140,13 @@ public interface UserService {
      */
     User getUserEntity(Long userId);
 
+    /**
+     * Checks if a user with the given phone number exists in the repository.
+     * <p>
+     * This method is used for internal service use only and should not be used from the outside.
+     *
+     * @param phoneNumber The phone number to be checked.
+     * @return true if a user with the given phone number exists, false otherwise.
+     */
     boolean checkIfPhoneExists(String phoneNumber);
 }

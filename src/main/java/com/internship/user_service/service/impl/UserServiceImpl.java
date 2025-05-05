@@ -1,10 +1,8 @@
 package com.internship.user_service.service.impl;
 
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.internship.user_service.constants.FilePath;
+import com.google.cloud.storage.*;
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.ImageDTO;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.exception.PictureNotFoundException;
@@ -22,17 +20,13 @@ import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
 
@@ -131,6 +125,46 @@ public class UserServiceImpl implements UserService {
         }
 
         return false;
+    }
+
+    @Override
+    public ImageDTO getProfilePicture(Long userId) {
+        UserResponse user = getUser(userId);
+
+        String pictureName = user.getProfilePicturePath();
+
+        if (pictureName.isBlank()) {
+            log.info("User {} doesn't have a profile picture.", userId);
+        }
+
+        log.info("Fetching profile picture for user {}.", userId);
+
+        try {
+            BlobId blobId = BlobId.of(bucketName, pictureName);
+
+            Blob blob = storage.get(blobId);
+
+            if (blob == null || !blob.exists()) {
+                log.error("Picture file {} not found in GCS bucket {} for user {}.", pictureName, bucketName, userId);
+                throw new UserNotFoundException("Profile picture not found in cloud storage.");
+            }
+
+            ImageDTO imageDTO = ImageDTO.builder().image(blob.getContent()).build();
+
+            if (pictureName.endsWith(".png")) {
+                imageDTO.setMediaType(MediaType.IMAGE_PNG);
+            } else if (pictureName.endsWith(".jpg") || pictureName.endsWith(".jpeg")) {
+                imageDTO.setMediaType(MediaType.IMAGE_JPEG);
+            } else {
+                imageDTO.setMediaType(MediaType.APPLICATION_OCTET_STREAM);
+            }
+
+            return imageDTO;
+
+        } catch (StorageException e) {
+            log.error("GCS error while fetching profile picture {} for user {}.", pictureName, userId);
+            throw new ServiceUnavailableException("GCS error while fetching profile picture " + pictureName + " for user " + userId);
+        }
     }
 
     @Override
