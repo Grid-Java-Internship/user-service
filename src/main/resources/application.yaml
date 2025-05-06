@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: "classpath:secrets.yaml"
   profiles:
     active: "default"
   application:
@@ -46,27 +48,17 @@ configs:
     queues:
       deleteUser: "deletePendingUserQueue"
 
-# TODO: Change this when OpenFeign communication is updated with inter-service token authentication
 security:
   paths:
     permittedRequestsForAllUsers:
       - method: GET
         pattern: /v1/users/{id}
       - method: GET
-        pattern: /v1/users/available/{id}
-
-      # TODO: Remove when auth library gets updated
-      - method: GET
         pattern: "/actuator/**"
       - method: GET
         pattern: "/swagger-ui/**"
       - method: GET
         pattern: "/v3/api-docs/**"
-
-      - method: POST
-        pattern: /v1/users/createUser
-      - method: GET
-        pattern: /v1/users/exists/by-phone
     permittedRequestsForUsersOrAdminOrSuperAdmin:
       - method: PUT
         pattern: /v1/preferences
@@ -83,6 +75,8 @@ security:
         pattern: /v1/users/deleteUser/{id}
       - method: POST
         pattern: /v1/users/available
+      - method: GET
+        pattern: /v1/users/available/{id}
 
       - method: GET
         pattern: /v1/favorites
@@ -100,4 +94,9 @@ security:
     permittedRequestsForAdminOrSuperAdmin:
       - method: GET
         pattern: /v1/users
-    permittedRequestForSuperAdmin: [ ]
+    permittedRequestForSuperAdmin:
+      - method: POST
+        pattern: /v1/users/createUser
+      - method: GET
+        pattern: /v1/users/exists/by-phone
+    api-key: "DEFAULT-USER-SERVICE-KEY"
