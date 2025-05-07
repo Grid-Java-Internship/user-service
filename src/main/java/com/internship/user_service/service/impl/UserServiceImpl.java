@@ -93,7 +93,11 @@ public class UserServiceImpl implements UserService {
                 .setContentType(file.getContentType())
                 .build();
 
-        storage.create(blobInfo, file.getBytes());
+        storage.create(
+                blobInfo,
+                file.getBytes(),
+                Storage.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ)
+        );
 
         user.setProfilePicturePath(fileName);
         User savedUser = userRepository.save(user);

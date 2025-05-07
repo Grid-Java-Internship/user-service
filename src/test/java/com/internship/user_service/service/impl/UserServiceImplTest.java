@@ -260,7 +260,7 @@ class UserServiceImplTest {
         when(mockFile.getOriginalFilename()).thenReturn("valid-image.jpg");
         when(mockFile.getContentType()).thenReturn(MediaType.IMAGE_JPEG_VALUE);
         when(mockFile.getBytes()).thenReturn(fakeImgData);
-        when(storage.create(any(BlobInfo.class), any(byte[].class)))
+        when(storage.create(any(BlobInfo.class), any(byte[].class), any(Storage.BlobTargetOption.class)))
                 .thenReturn(mock(Blob.class));
 
         UserResponse result = userService.addProfilePicture(1L, mockFile);
