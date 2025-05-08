@@ -234,8 +234,12 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
+### Env ###
+.env
+
 ### Tests ###
 htmlReport
+credentials
 
 ### Credentials ###
 /credentials
