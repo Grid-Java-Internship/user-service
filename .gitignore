@@ -236,6 +236,7 @@ gradle-app.setting
 
 ### Tests ###
 htmlReport
+/credentials
 
 ### env ###
 /src/main/resources/env.properties
