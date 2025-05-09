@@ -114,4 +114,10 @@ public class UserExceptionHandler {
         return handleUserDefinedException(ex, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ExceptionResponse> handleServiceUnavailableException(ServiceUnavailableException ex) {
+        log.error("ServiceUnavailableException occurred: {}", ex.getMessage());
+        return handleUserDefinedException(ex, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
 }

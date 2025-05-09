@@ -6,14 +6,25 @@ import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Value;
 
 @Mapper(componentModel = "spring",
-        imports = FilePath.class)
-public interface UserMapper {
+        imports = FilePath.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public abstract class UserMapper {
 
-    @Mapping(target = "profilePicturePath",
-            expression = "java(user.getProfilePicturePath() != null ? FilePath.PATH_PICTURE_URL + user.getProfilePicturePath() : null)")
-    UserResponse toUserResponse(User user);
+    @Value("${gcs.bucket.name}")
+    private String bucketName;
 
-    User toUserEntity(UserDTO userDTO);
+    @Mapping(target = "profilePicturePath", expression = "java(buildFullGcsUrl(user.getProfilePicturePath()))")
+    public abstract UserResponse toUserResponse(User user);
+
+    public abstract User toUserEntity(UserDTO userDTO);
+
+    @Named("buildFullGcsUrl")
+    protected String buildFullGcsUrl(String path) {
+        return "https://storage.googleapis.com/" + bucketName + "/" + path;
+    }
 }

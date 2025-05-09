@@ -1,4 +1,4 @@
-package com.internship.user_service.service;
+package com.internship.user_service.service.impl;
 
 import com.internship.user_service.dto.PreferencesDTO;
 import com.internship.user_service.exception.ConflictException;
@@ -9,6 +9,7 @@ import com.internship.user_service.model.WantedCategory;
 import com.internship.user_service.model.WantedCategoryId;
 import com.internship.user_service.repository.PreferencesRepository;
 import com.internship.user_service.repository.UserRepository;
+import com.internship.user_service.service.PreferenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

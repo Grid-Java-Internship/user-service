@@ -1,7 +1,9 @@
 package com.internship.user_service.service.impl;
 
+import com.google.cloud.storage.*;
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.ImageDTO;
 import com.internship.user_service.dto.UserDTO;
 import com.internship.user_service.dto.UserResponse;
 import com.internship.user_service.dto.WorkingHoursRequest;
@@ -18,17 +20,20 @@ import com.internship.user_service.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,6 +61,9 @@ class UserServiceImplTest {
     @Mock
     private AvailabilityMapper availabilityMapper;
 
+    @Mock
+    private Storage storage;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -75,23 +83,28 @@ class UserServiceImplTest {
         user.setName("Marko");
         user.setSurname("Markovic");
         user.setEmail("marko@internship.com");
+        user.setProfilePicturePath("pictureUserId_1.jpg");
 
         userDTO = new UserDTO();
         userDTO.setId(1L);
         userDTO.setName("Marko");
         userDTO.setSurname("Markovic");
         userDTO.setEmail("marko@internship.com");
+        userDTO.setProfilePicturePath("pictureUserId_1.jpg");
 
         userResponse = new UserResponse();
         userResponse.setId(1L);
         userResponse.setName("Marko");
         userResponse.setSurname("Markovic");
         userResponse.setEmail("marko@internship.com");
+        userResponse.setProfilePicturePath("pictureUserId_1.jpg");
 
         availabilityDTO = new AvailabilityDTO();
         availabilityDTO.setWorkerId(1L);
         availabilityDTO.setStartTime(LocalDateTime.of(2025, 3, 25, 8, 0));
         availabilityDTO.setEndTime(LocalDateTime.of(2025, 3, 25, 12, 0));
+
+        ReflectionTestUtils.setField(userService, "bucketName", "testBucketName");
 
         workingHoursRequest = WorkingHoursRequest
                 .builder()
@@ -120,7 +133,6 @@ class UserServiceImplTest {
 
         ArgumentCaptor<UserDTO> userDTOCaptor = ArgumentCaptor.forClass(UserDTO.class);
         verify(userMapper).toUserEntity(userDTOCaptor.capture());
-        UserDTO capturedUserDTO = userDTOCaptor.getValue();
 
         verify(userMapper, times(1)).toUserEntity(userDTO);
         verify(userRepository, times(1)).save(user);
@@ -232,25 +244,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void addProfilePictureWhenIOException() throws IOException {
-        MultipartFile mockIOExceptionFile = mock(MultipartFile.class);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(mockIOExceptionFile.getOriginalFilename()).thenReturn("valid-image.jpg");
-        doThrow(new IOException()).when(mockIOExceptionFile).transferTo(any(File.class));
-
-        PictureNotFoundException exception = assertThrows(PictureNotFoundException.class,
-                () -> userService.addProfilePicture(1L, mockIOExceptionFile));
-        assertEquals("IO Exception occurred while uploading profile picture!", exception.getMessage());
-
-        verify(userRepository, times(1)).findById(1L);
-        verify(userRepository, never()).save(any());
-        verify(userMapper, never()).toUserResponse(any());
-        verify(mockIOExceptionFile, times(1)).transferTo(any(File.class));
-        verify(mockIOExceptionFile, times(1)).getOriginalFilename();
-
-    }
-
-    @Test
     void addProfilePictureWhenInvalidFileExtensionOrNull() {
         MultipartFile mockInvalidFileExtension = mock(MultipartFile.class);
         MultipartFile mockNullFile = mock(MultipartFile.class);
@@ -277,12 +270,17 @@ class UserServiceImplTest {
     @Test
     void addProfilePictureWhenSuccessful() throws IOException {
         MultipartFile mockFile = mock(MultipartFile.class);
+        byte[] fakeImgData = "fake img data".getBytes();
+
         userResponse.setProfilePicturePath("pictureUserId_1.jpg");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
         when(mockFile.getOriginalFilename()).thenReturn("valid-image.jpg");
-        doNothing().when(mockFile).transferTo(any(File.class));
+        when(mockFile.getContentType()).thenReturn(MediaType.IMAGE_JPEG_VALUE);
+        when(mockFile.getBytes()).thenReturn(fakeImgData);
+        when(storage.create(any(BlobInfo.class), any(byte[].class), any(Storage.BlobTargetOption.class)))
+                .thenReturn(mock(Blob.class));
 
         UserResponse result = userService.addProfilePicture(1L, mockFile);
 
@@ -301,9 +299,128 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).save(user);
         verify(userMapper, times(1)).toUserResponse(user);
-        verify(mockFile, times(1)).transferTo(any(File.class));
         verify(mockFile, times(1)).getOriginalFilename();
+    }
 
+    @Test
+    void deleteProfilePicture_shouldDeletePicture_whenItExists() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+
+        when(storage.delete(any(BlobId.class))).thenReturn(true);
+
+        Boolean result = userService.deleteProfilePicture(user.getId());
+
+        assertTrue(result);
+    }
+
+    @Test
+    void deleteProfilePicture_shouldReturnFalse_whenPictureDoesntExist() {
+        user.setProfilePicturePath("");
+
+        Boolean result = userService.deleteProfilePicture(user);
+
+        assertFalse(result);
+        verify(storage, never()).delete(any(BlobId.class));
+    }
+
+    @Test
+    void deleteProfilePicture_shouldReturnFalse_whenDeletionFails() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+
+        when(storage.delete(any(BlobId.class))).thenReturn(false);
+
+        Boolean result = userService.deleteProfilePicture(user.getId());
+
+        assertFalse(result);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "pictureUserId_1.png,            image/png",
+            "pictureUserId_1.jpg,            image/jpeg",
+            "pictureUserId_1.jpeg,           image/jpeg",
+            "pictureUserId_1.webp,           application/octet-stream"
+    })
+    void getProfilePicture_shouldReturnCorrectMediaTypeForExtension(String profilePicturePath, String expectedMediaTypeString) {
+        Blob blob = mock(Blob.class);
+
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
+        when(blob.exists()).thenReturn(true);
+
+        userResponse.setProfilePicturePath(profilePicturePath);
+        MediaType expectedMediaType = MediaType.valueOf(expectedMediaTypeString);
+
+        ImageDTO result = userService.getProfilePicture(1L);
+
+        assertNotNull(result);
+        assertEquals(expectedMediaType, result.mediaType);
+    }
+
+    @Test
+    void getProfilePicture_shouldThrowException_whenUserDoesntHaveAPfp() {
+        userResponse.setProfilePicturePath("");
+
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+
+        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.getProfilePicture(1L));
+
+        assertNotNull(ex);
+        assertEquals("User 1 doesn't have profile picture.", ex.getMessage());
+    }
+
+    @Test
+    void getProfilePicture_shouldThrowException_whenPictureIsNotOnGCS() {
+        Blob blob = mock(Blob.class);
+
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+
+        when(storage.get(any(BlobId.class))).thenReturn(blob);
+        when(blob.exists()).thenReturn(false);
+
+        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.getProfilePicture(1L));
+
+        assertNotNull(ex);
+        assertEquals(
+                "Profile picture " + user.getProfilePicturePath() + " not found in cloud storage.",
+                ex.getMessage()
+        );
+    }
+
+    @Test
+    void getProfilePicture_shouldThrowException_whenPictureIsNull() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+        when(storage.get(any(BlobId.class))).thenReturn(null);
+
+        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.getProfilePicture(1L));
+
+        assertNotNull(ex);
+        assertEquals(
+                "Profile picture " + user.getProfilePicturePath() + " not found in cloud storage.",
+                ex.getMessage()
+        );
+    }
+
+    @Test
+    void getProfilePicture_shouldThrowException_whenGCSisUnreachable() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(userResponse);
+        when(storage.get(any(BlobId.class))).thenThrow(new StorageException(503, "Unreachable"));
+
+        ServiceUnavailableException ex = assertThrows(
+                ServiceUnavailableException.class,
+                () -> userService.getProfilePicture(1L)
+        );
+
+        assertNotNull(ex);
+        assertEquals(
+                "GCS error while fetching profile picture " + user.getProfilePicturePath() + " for user " + user.getId(),
+                ex.getMessage()
+        );
     }
 
     @Test
@@ -357,6 +474,7 @@ class UserServiceImplTest {
     void undoUserCreation_shouldReturnTrue_whenUserExists() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doNothing().when(userRepository).delete(user);
+        when(storage.delete(any(BlobId.class))).thenReturn(true);
 
         boolean result = userService.undoUserCreation(1L);
 

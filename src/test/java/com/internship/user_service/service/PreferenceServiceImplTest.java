@@ -10,6 +10,7 @@ import com.internship.user_service.model.WantedCategory;
 import com.internship.user_service.model.WantedCategoryId;
 import com.internship.user_service.repository.PreferencesRepository;
 import com.internship.user_service.repository.UserRepository;
+import com.internship.user_service.service.impl.PreferenceServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

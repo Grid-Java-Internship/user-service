@@ -18,6 +18,15 @@ spring:
     host: ${RABBITMQ_HOST:rabbitmq}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+  config:
+    import: classpath:env.properties
+  cloud:
+    gcp:
+      project-id: gd-gcp-internship-cd
+
+gcs:
+  bucket:
+    name: "hah-image-bucket"
 
 logging:
   pattern:

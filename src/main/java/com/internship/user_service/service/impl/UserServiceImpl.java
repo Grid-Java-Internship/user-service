@@ -1,7 +1,8 @@
 package com.internship.user_service.service.impl;
 
-import com.internship.user_service.constants.FilePath;
+import com.google.cloud.storage.*;
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.ImageDTO;
 import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
@@ -24,15 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
 
@@ -41,11 +37,14 @@ import static com.internship.user_service.constants.FilePath.ALLOWED_EXTENSIONS;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private final Storage storage;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final String uploadDir = System.getProperty("user.dir") + FilePath.PATH;
     private final AvailabilityRepository availabilityRepository;
     private final AvailabilityMapper availabilityMapper;
+
+    @Value("${gcs.bucket.name}")
+    private String bucketName;
 
     private String getFileExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
@@ -68,7 +67,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse addProfilePicture(Long userId, MultipartFile file) {
+    public UserResponse addProfilePicture(Long userId, MultipartFile file) throws IOException {
         User user = userRepository
                 .findById(userId)
                 .orElseThrow(() -> {
@@ -89,19 +88,92 @@ public class UserServiceImpl implements UserService {
         }
 
         String fileName = "pictureUserId_" + userId + "." + getFileExtension(originalFilename);
-        Path filePath = Paths.get(uploadDir).resolve(fileName);
 
-        try {
-            file.transferTo(filePath.toFile());
-        } catch (IOException e) {
-            log.error("IO Exception occurred while uploading profile picture!");
-            throw new PictureNotFoundException("IO Exception occurred while uploading profile picture!");
-        }
+        BlobId blobId = BlobId.of(bucketName, fileName);
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+
+        storage.create(
+                blobInfo,
+                file.getBytes(),
+                Storage.BlobTargetOption.predefinedAcl(Storage.PredefinedAcl.PUBLIC_READ)
+        );
 
         user.setProfilePicturePath(fileName);
         User savedUser = userRepository.save(user);
         log.info("Profile picture added for user with id {}.", userId);
         return userMapper.toUserResponse(savedUser);
+    }
+
+    @Override
+    public Boolean deleteProfilePicture(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+
+        return deleteProfilePicture(user);
+    }
+
+    @Override
+    public Boolean deleteProfilePicture(User user) {
+
+        if (!user.getProfilePicturePath().isBlank()) {
+            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath());
+            boolean deleted = storage.delete(blobId);
+
+            if (deleted) {
+                log.info("Image deleted for user {}.", user.getId());
+            } else {
+                log.error("Image deletion failed for user {}.", user.getId());
+            }
+            return deleted;
+        }
+
+        return false;
+    }
+
+    @Override
+    public ImageDTO getProfilePicture(Long userId) {
+        UserResponse user = getUser(userId);
+
+        String pictureName = user.getProfilePicturePath();
+
+        if (pictureName.isBlank()) {
+            log.info("User {} doesn't have a profile picture.", userId);
+            throw new UserNotFoundException("User " + userId + " doesn't have profile picture.");
+        }
+
+        log.info("Fetching profile picture for user {}.", userId);
+
+        try {
+            BlobId blobId = BlobId.of(bucketName, pictureName);
+            Blob blob = storage.get(blobId);
+
+            if (blob == null || !blob.exists()) {
+                log.error("Picture file {} not found in GCS bucket {} for user {}.", pictureName, bucketName, userId);
+                throw new UserNotFoundException("Profile picture " +
+                        user.getProfilePicturePath() +
+                        " not found in cloud storage."
+                );
+            }
+
+            ImageDTO imageDTO = ImageDTO.builder().image(blob.getContent()).build();
+
+            if (pictureName.endsWith(".png")) {
+                imageDTO.setMediaType(MediaType.IMAGE_PNG);
+            } else if (pictureName.endsWith(".jpg") || pictureName.endsWith(".jpeg")) {
+                imageDTO.setMediaType(MediaType.IMAGE_JPEG);
+            } else {
+                imageDTO.setMediaType(MediaType.APPLICATION_OCTET_STREAM);
+            }
+
+            return imageDTO;
+
+        } catch (StorageException e) {
+            log.error("GCS error while fetching profile picture {} for user {}.", pictureName, userId);
+            throw new ServiceUnavailableException("GCS error while fetching profile picture " + pictureName + " for user " + userId);
+        }
     }
 
     @Override
@@ -190,7 +262,10 @@ public class UserServiceImpl implements UserService {
                 new UserNotFoundException("User not found.")
         );
 
+        deleteProfilePicture(user);
+
         userRepository.delete(user);
+
         return true;
     }
 
@@ -264,5 +339,7 @@ public class UserServiceImpl implements UserService {
         log.info("User with id {} updated successfully.", user.getId());
         return userMapper.toUserResponse(user);
     }
+
+
 
 }
