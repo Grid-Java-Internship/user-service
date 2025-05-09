@@ -78,4 +78,21 @@ public class PreferenceServiceImpl implements PreferenceService {
 
         return preferenceDTO;
     }
+
+    @Override
+    public PreferencesDTO getPreferences(Long userId) {
+
+        Preferences preferences = preferencesRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+
+        return PreferencesDTO.builder()
+                .userId(preferences.getUser().getId())
+                .preferredDistance(preferences.getPreferredDistance())
+                .preferredExperience(preferences.getPreferredExperience())
+                .wantedCategories(preferences.getWantedCategories().stream()
+                        .map(WantedCategory::getWantedCategoryId)
+                        .map(WantedCategoryId::getCategoryId)
+                        .toList())
+                .build();
+    }
 }

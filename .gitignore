@@ -236,14 +236,13 @@ gradle-app.setting
 
 ### Tests ###
 htmlReport
+
+### Credentials ###
 /credentials
 
 ### env ###
 /src/main/resources/env.properties
 env.properties
 .env
-
-### Credentials ###
-credentials
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,intellij,gradle,maven,git

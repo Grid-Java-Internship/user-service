@@ -36,4 +36,15 @@ public class PreferencesController {
     public ResponseEntity<PreferencesDTO> updatePreferences(@RequestBody @Valid PreferencesDTO preferenceDTO) {
         return ResponseEntity.status(HttpStatus.OK).body(preferenceService.updatePreferences(preferenceDTO));
     }
+
+    /**
+     * Returns the preferences of the user with the given {@code userId}.
+     *
+     * @param userId The ID of the user whose preferences are to be retrieved.
+     * @return The preferences of the given user.
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<PreferencesDTO> getPreferences(@PathVariable Long userId) {
+        return ResponseEntity.status(HttpStatus.OK).body(preferenceService.getPreferences(userId));
+    }
 }

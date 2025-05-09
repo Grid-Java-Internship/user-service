@@ -132,4 +132,29 @@ class PreferenceServiceImplTest {
         assertNotNull(exception);
         assertEquals("User not found.", exception.getMessage());
     }
+
+    @Test
+    void getPreferences_shouldThrowException_forNonExistingUser() {
+        when(preferencesRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
+                () -> preferenceService.getPreferences(anyLong())
+        );
+
+        assertNotNull(exception);
+        assertEquals("User not found.", exception.getMessage());
+    }
+
+    @Test
+    void getPreferences_shouldReturnPreferences_forExistingUser() {
+        when(preferencesRepository.findById(anyLong())).thenReturn(Optional.of(preferences));
+
+        PreferencesDTO result = preferenceService.getPreferences(anyLong());
+
+        assertNotNull(result);
+        assertEquals(1L, result.getUserId());
+        assertEquals(2, result.getPreferredExperience());
+        assertEquals(3.0, result.getPreferredDistance());
+    }
 }
