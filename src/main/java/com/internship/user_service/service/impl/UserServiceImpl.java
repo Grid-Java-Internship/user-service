@@ -2,6 +2,7 @@ package com.internship.user_service.service.impl;
 
 import com.internship.user_service.constants.FilePath;
 import com.internship.user_service.dto.AvailabilityDTO;
+import com.internship.user_service.dto.WorkingHoursRequest;
 import com.internship.user_service.exception.*;
 import com.internship.user_service.mapper.AvailabilityMapper;
 import com.internship.user_service.exception.PictureNotFoundException;
@@ -18,13 +19,16 @@ import jakarta.transaction.Transactional;
 import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -197,6 +201,42 @@ public class UserServiceImpl implements UserService {
             return new UserNotFoundException("User not found.");
         });
     }
+
+    @Override
+    public boolean checkIfPhoneExists(String phoneNumber) {
+        return userRepository.checkIfPhoneExists(phoneNumber);
+    }
+
+
+    @Override
+    public void updateWorkingHours(WorkingHoursRequest request) {
+
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
+        LocalTime startTime = request.getStartTime();
+        LocalTime endTime = request.getEndTime();
+
+        User user = userRepository.findById(userId).orElseThrow(() ->
+            new UserNotFoundException("User with id " + userId + " was not found.")
+        );
+
+        if(startTime.isAfter(endTime)) {
+            throw new ConflictException("Start time must be before end time.");
+        }
+
+        Duration duration = Duration.between(startTime, endTime);
+
+        if(duration.toMinutes() < 30) {
+            throw new ConflictException("Your working hours must be at least 30 minutes.");
+        }
+
+        user.setStartTime(startTime);
+
+        user.setEndTime(endTime);
+
+        userRepository.save(user);
+    }
+
     @Override
     @Transactional
     public UserResponse editUser(UserDTO userDTO) {
