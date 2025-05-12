@@ -62,7 +62,6 @@ class PreferenceServiceImplTest {
                 .build();
 
         preferencesDTO = PreferencesDTO.builder()
-                .userId(1L)
                 .preferredExperience(2)
                 .preferredDistance(3.0)
                 .wantedCategories(List.of(JobCategory.ALL))
@@ -79,7 +78,6 @@ class PreferenceServiceImplTest {
         PreferencesDTO result = preferenceService.setPreferences(preferencesDTO);
 
         assertNotNull(result);
-        assertEquals(1L, result.getUserId());
         assertEquals(2, result.getPreferredExperience());
         assertEquals(3.0, result.getPreferredDistance());
         assertEquals(List.of(JobCategory.ALL), result.getWantedCategories());
@@ -116,7 +114,6 @@ class PreferenceServiceImplTest {
         PreferencesDTO result = preferenceService.updatePreferences(preferencesDTO);
 
         assertNotNull(result);
-        assertEquals(1L, result.getUserId());
         assertEquals(2, result.getPreferredExperience());
         assertEquals(3.0, result.getPreferredDistance());
         assertEquals(List.of(JobCategory.ALL), result.getWantedCategories());

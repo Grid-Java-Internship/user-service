@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,18 +33,18 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final BlockService blockService;
 
     @Override
-    public List<Long> getFavoriteUsers(Long userId, int page, int pageSize) {
+    public List<Long> getFavoriteUsers(int page, int pageSize) {
         // Retrieve the user if it exists
-        User user = userService.getUserEntity(userId);
+        User user = userService.getUserEntity(Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()));
 
         // Retrieve favorite users
         List<Long> favoriteUsers = getFavoriteUsersPage(user, page, pageSize).getContent();
 
         // If there are no favorite users, return empty list
         if (favoriteUsers.isEmpty()) {
-            log.info("User with userId {} has no favorite users.", userId);
+            log.info("User with userId {} has no favorite users.", user.getId());
         } else {
-            log.info("Retrieved favorite users for user with userId {}.", userId);
+            log.info("Retrieved favorite users for user with userId {}.", user.getId());
         }
 
         // Return favorite users
@@ -51,8 +52,10 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
-    public FavoriteResponse addFavorite(Long userId, Long favoriteUserId) {
+    public FavoriteResponse addFavorite(Long favoriteUserId) {
         // Check if userId and favoriteUserId are valid
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
         verifyFavoriteUserIds(userId, favoriteUserId);
 
         // Retrieve users if they exist
@@ -83,8 +86,9 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
-    public void deleteFavorite(Long userId, Long favoriteUserId) {
+    public void deleteFavorite(Long favoriteUserId) {
         // Check if userId and favoriteUserId are valid
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         verifyFavoriteUserIds(userId, favoriteUserId);
 
         // Retrieve users if they exist

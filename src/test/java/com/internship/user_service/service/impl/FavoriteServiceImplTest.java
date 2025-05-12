@@ -20,7 +20,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +56,9 @@ class FavoriteServiceImplTest {
     private Favorite favorite;
     private FavoriteResponse favoriteResponse;
 
+    Authentication authentication = mock(Authentication.class);
+    SecurityContext securityContext = mock(SecurityContext.class);
+
     private static final Long USER_ID = 1L;
     private static final Long FAVORITE_USER_ID = 2L;
     private static final Long NON_EXISTENT_USER_ID = 99L;
@@ -76,6 +84,11 @@ class FavoriteServiceImplTest {
         favoriteResponse = FavoriteResponse.builder()
                 .id(favoriteId)
                 .build();
+        when(authentication.getPrincipal()).thenReturn("1");
+        Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        when(authentication.getAuthorities()).thenReturn(authorities);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Nested
@@ -89,7 +102,7 @@ class FavoriteServiceImplTest {
             when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(favorite)));
 
             // Act
-            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+            List<Long> result = favoriteService.getFavoriteUsers(0, 10);
 
             // Assert
             assertThat(result)
@@ -111,7 +124,7 @@ class FavoriteServiceImplTest {
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.getFavoriteUsers(USER_ID, 0, 10))
+            assertThatThrownBy(() -> favoriteService.getFavoriteUsers(0, 10))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
@@ -129,7 +142,7 @@ class FavoriteServiceImplTest {
             when(favoriteRepository.findByUser(any(User.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
 
             // Act
-            List<Long> result = favoriteService.getFavoriteUsers(USER_ID, 0, 10);
+            List<Long> result = favoriteService.getFavoriteUsers(0, 10);
 
             // Assert
             assertThat(result).isEmpty();
@@ -156,7 +169,7 @@ class FavoriteServiceImplTest {
             when(favoriteMapper.toResponse(favorite)).thenReturn(favoriteResponse);
 
             // Act
-            FavoriteResponse result = favoriteService.addFavorite(USER_ID, FAVORITE_USER_ID);
+            FavoriteResponse result = favoriteService.addFavorite(FAVORITE_USER_ID);
 
             // Assert
             assertThat(result)
@@ -187,7 +200,7 @@ class FavoriteServiceImplTest {
             when(blockService.blockExists(USER_ID, FAVORITE_USER_ID)).thenReturn(true);
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, FAVORITE_USER_ID))
+            assertThatThrownBy(() -> favoriteService.addFavorite(FAVORITE_USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("User blocked user to be favorited.");
 
@@ -210,7 +223,7 @@ class FavoriteServiceImplTest {
             when(favoriteRepository.existsById(favoriteId)).thenReturn(true);
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, FAVORITE_USER_ID))
+            assertThatThrownBy(() -> favoriteService.addFavorite(FAVORITE_USER_ID))
                     .isInstanceOf(AlreadyExistsException.class)
                     .hasMessage("Favorite relationship already exists.");
 
@@ -227,16 +240,16 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw UserNotFoundException when user does not exist")
         void addFavorite_userNotFound() {
             // Arrange
-            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+            when(userService.getUserEntity(anyLong())).thenThrow(
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(NON_EXISTENT_USER_ID, FAVORITE_USER_ID))
+            assertThatThrownBy(() -> favoriteService.addFavorite(FAVORITE_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService).getUserEntity(anyLong());
             verify(userService, never()).getUserEntity(FAVORITE_USER_ID);
             verifyNoInteractions(blockService, favoriteRepository, favoriteMapper);
             verifyNoMoreInteractions(userService);
@@ -251,7 +264,7 @@ class FavoriteServiceImplTest {
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, NON_EXISTENT_USER_ID))
+            assertThatThrownBy(() -> favoriteService.addFavorite(NON_EXISTENT_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
@@ -266,9 +279,14 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null userId")
         void addFavorite_nullUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(null, FAVORITE_USER_ID))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("Invalid userId or favoriteUserId.");
+            when(authentication.getPrincipal()).thenReturn(null);
+            Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            when(authentication.getAuthorities()).thenReturn(authorities);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() -> favoriteService.addFavorite(FAVORITE_USER_ID))
+                    .isInstanceOf(NumberFormatException.class);
 
             // Verify interactions
             verifyNoInteractions(userService, blockService, favoriteRepository, favoriteMapper);
@@ -278,7 +296,7 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null favoriteUserId")
         void addFavorite_nullFavoriteUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, null))
+            assertThatThrownBy(() -> favoriteService.addFavorite(null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or favoriteUserId.");
 
@@ -290,7 +308,7 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException when userId equals favoriteUserId")
         void addFavorite_sameUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID, USER_ID))
+            assertThatThrownBy(() -> favoriteService.addFavorite(USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or favoriteUserId.");
 
@@ -313,7 +331,7 @@ class FavoriteServiceImplTest {
             doNothing().when(favoriteRepository).deleteById(favoriteId);
 
             // Act
-            favoriteService.deleteFavorite(USER_ID, FAVORITE_USER_ID);
+            favoriteService.deleteFavorite(FAVORITE_USER_ID);
 
             // Assert & Verify interactions
             verify(userService).getUserEntity(USER_ID);
@@ -332,7 +350,7 @@ class FavoriteServiceImplTest {
             when(favoriteRepository.existsById(favoriteId)).thenReturn(false);
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID, FAVORITE_USER_ID))
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(FAVORITE_USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Favorite relationship does not exist.");
 
@@ -347,16 +365,16 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw UserNotFoundException when user does not exist")
         void deleteFavorite_userNotFound() {
             // Arrange
-            when(userService.getUserEntity(NON_EXISTENT_USER_ID)).thenThrow(
+            when(userService.getUserEntity(anyLong())).thenThrow(
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(NON_EXISTENT_USER_ID, FAVORITE_USER_ID))
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(FAVORITE_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
             // Verify interactions
-            verify(userService).getUserEntity(NON_EXISTENT_USER_ID);
+            verify(userService).getUserEntity(anyLong());
             verify(userService, never()).getUserEntity(FAVORITE_USER_ID);
             verifyNoInteractions(favoriteRepository);
             verifyNoMoreInteractions(userService);
@@ -371,7 +389,7 @@ class FavoriteServiceImplTest {
                     new UserNotFoundException("User not found."));
 
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID, NON_EXISTENT_USER_ID))
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(NON_EXISTENT_USER_ID))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessage("User not found.");
 
@@ -386,9 +404,13 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null userId")
         void deleteFavorite_nullUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(null, FAVORITE_USER_ID))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("Invalid userId or favoriteUserId.");
+            when(authentication.getPrincipal()).thenReturn(null);
+            Collection authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            when(authentication.getAuthorities()).thenReturn(authorities);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(FAVORITE_USER_ID))
+                    .isInstanceOf(NumberFormatException.class);
 
             // Verify no repository interactions happened
             verifyNoInteractions(userService, favoriteRepository);
@@ -398,7 +420,7 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException for null favoriteUserId")
         void deleteFavorite_nullFavoriteUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID, null))
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or favoriteUserId.");
 
@@ -410,7 +432,7 @@ class FavoriteServiceImplTest {
         @DisplayName("Should throw IllegalArgumentException when userId equals favoriteUserId")
         void deleteFavorite_sameUserId() {
             // Act & Assert
-            assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID, USER_ID))
+            assertThatThrownBy(() -> favoriteService.deleteFavorite(USER_ID))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid userId or favoriteUserId.");
 

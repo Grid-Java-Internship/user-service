@@ -14,14 +14,12 @@ public class BlockController {
     /**
      * Blocks a user with the given {@code blockedUserId} for the user with the given {@code userId}.
      *
-     * @param userId        The ID of the user who wants to block another user.
      * @param blockedUserId The ID of the user to be blocked.
      * @return A {@link ResponseEntity} with no content, indicating the block operation has been processed.
      */
-    @PostMapping("/{userId}/{blockedUserId}")
-    public ResponseEntity<Void> blockUser(@PathVariable Long userId,
-                                          @PathVariable Long blockedUserId) {
-        blockService.blockUser(userId, blockedUserId);
+    @PostMapping("/{blockedUserId}")
+    public ResponseEntity<Void> blockUser(@PathVariable Long blockedUserId) {
+        blockService.blockUser(blockedUserId);
         return ResponseEntity.noContent().build();
     }
 
@@ -32,10 +30,9 @@ public class BlockController {
      * @param blockedUserId The ID of the user to be unblocked.
      * @return A {@link ResponseEntity} with no content, indicating the unblock operation has been processed.
      */
-    @DeleteMapping("/{userId}/{blockedUserId}")
-    public ResponseEntity<Void> unblockUser(@PathVariable Long userId,
-                                            @PathVariable Long blockedUserId) {
-        blockService.unblockUser(userId, blockedUserId);
+    @DeleteMapping("/{blockedUserId}")
+    public ResponseEntity<Void> unblockUser(@PathVariable Long blockedUserId) {
+        blockService.unblockUser(blockedUserId);
         return ResponseEntity.noContent().build();
     }
 }

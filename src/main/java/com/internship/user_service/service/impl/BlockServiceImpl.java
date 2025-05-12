@@ -11,6 +11,7 @@ import com.internship.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,8 @@ public class BlockServiceImpl implements BlockService {
 
     @Transactional
     @Override
-    public void blockUser(Long userId, Long blockedUserId) {
+    public void blockUser(Long blockedUserId) {
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         // Check if userId and blockedUserId are valid
         verifyBlockUserIds(userId, blockedUserId);
 
@@ -51,12 +53,13 @@ public class BlockServiceImpl implements BlockService {
 
         // Remove blockedUser from favorites if it was favorited by user
         if (favoriteService.favoriteExists(userId, blockedUserId)) {
-            favoriteService.deleteFavorite(userId, blockedUserId);
+            favoriteService.deleteFavorite(blockedUserId);
         }
     }
 
     @Override
-    public void unblockUser(Long userId, Long blockedUserId) {
+    public void unblockUser(Long blockedUserId) {
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         // Check if userId and blockedUserId are valid
         verifyBlockUserIds(userId, blockedUserId);
 

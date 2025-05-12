@@ -33,13 +33,12 @@ public class UserController {
 
     /**
      * Updates the user with given {@code id} by adding the given {@link MultipartFile} as a profile picture.
-     * @param id The id of the user
      * @param file The file to add as a profile picture
      * @return The updated user
      */
-    @PatchMapping("/{id}/addProfilePicture")
-    public ResponseEntity<UserResponse> addProfilePicture(@PathVariable Long id, @RequestPart("file") MultipartFile file) {
-        UserResponse userResponse = userService.addProfilePicture(id, file);
+    @PatchMapping("/addProfilePicture")
+    public ResponseEntity<UserResponse> addProfilePicture(@RequestPart("file") MultipartFile file) {
+        UserResponse userResponse = userService.addProfilePicture(file);
         return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 

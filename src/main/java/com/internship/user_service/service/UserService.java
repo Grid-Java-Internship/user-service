@@ -24,13 +24,12 @@ public interface UserService {
     /**
      * Adds a profile picture for the user with the specified ID.
      *
-     * @param id The ID of the user for whom the profile picture is to be added.
      * @param file The MultipartFile containing the profile picture to be uploaded.
      * @return A UserResponse containing the updated user information with the new profile picture path.
      * @throws UserNotFoundException if the user with the specified ID does not exist.
      * @throws PictureNotFoundException if the file is empty or not a valid image type.
      */
-    UserResponse addProfilePicture(Long id, MultipartFile file);
+    UserResponse addProfilePicture(MultipartFile file);
 
     /**
      * Returns the user with the specified ID.
@@ -48,8 +47,9 @@ public interface UserService {
      */
     List<UserResponse> getAllUsers();
 
+    @Deprecated
     List<Availability> getAvailabilityForTheUser(Long userId);
-
+    @Deprecated
     void addAvailabilityToTheUser(AvailabilityDTO availabilityDTO);
 
     /**
