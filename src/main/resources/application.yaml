@@ -1,6 +1,4 @@
 spring:
-  config:
-    import: "classpath:secrets.yaml"
   profiles:
     active: "default"
   application:
@@ -99,4 +97,4 @@ security:
         pattern: /v1/users/createUser
       - method: GET
         pattern: /v1/users/exists/by-phone
-  api-key: "DEFAULT-USER-SERVICE-KEY"
+  api-key: "${BASE_API_KEY}"

@@ -238,6 +238,5 @@ gradle-app.setting
 htmlReport
 
 /src/main/resources/env.properties
-/src/main/resources/secrets.yaml
 .env
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,intellij,gradle,maven,git
