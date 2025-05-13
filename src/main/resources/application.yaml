@@ -69,6 +69,8 @@ security:
         pattern: /v1/preferences
       - method: POST
         pattern: /v1/preferences
+      - method: GET
+        pattern: /v1/preferences/{id}
 
       - method: PATCH
         pattern: /v1/users/workingHours

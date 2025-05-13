@@ -16,7 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PreferencesDTO {
 
-    @NotNull
     private Long userId;
 
     @NotNull

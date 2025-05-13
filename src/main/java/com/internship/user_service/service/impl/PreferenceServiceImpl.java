@@ -11,6 +11,7 @@ import com.internship.user_service.repository.PreferencesRepository;
 import com.internship.user_service.repository.UserRepository;
 import com.internship.user_service.service.PreferenceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +25,12 @@ public class PreferenceServiceImpl implements PreferenceService {
     @Override
     @Transactional
     public PreferencesDTO setPreferences(PreferencesDTO preferenceDTO) {
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-        User user = userRepository.findById(preferenceDTO.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
-        preferencesRepository.findById(user.getId())
+        preferencesRepository.findById(userId)
                 .ifPresent(p -> { throw new ConflictException("Preferences already set."); });
 
         Preferences preferences = Preferences.builder()
@@ -55,7 +57,9 @@ public class PreferenceServiceImpl implements PreferenceService {
     @Override
     @Transactional
     public PreferencesDTO updatePreferences(PreferencesDTO preferenceDTO) {
-        Preferences preferences = preferencesRepository.findById(preferenceDTO.getUserId())
+        Long userId = Long.parseLong((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
+        Preferences preferences = preferencesRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         preferences.setPreferredDistance(preferenceDTO.getPreferredDistance());
