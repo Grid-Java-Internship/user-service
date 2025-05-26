@@ -264,7 +264,9 @@ public class UserServiceImpl implements UserService {
                 new UserNotFoundException("User not found.")
         );
 
-        deleteProfilePicture(user);
+        if (!user.getProfilePicturePath().isBlank()) {
+            deleteProfilePicture(user);
+        }
 
         userRepository.delete(user);
 
