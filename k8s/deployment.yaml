@@ -49,6 +49,13 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-secret
                   key: RABBITMQ_PASSWORD
+            - name: BASE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-key-secret
+                  key: USER_API_KEY
+            - name: EUREKA_SERVICE_URL
+              value: http://eureka-naming-server-service:8761/eureka
           ports:
             - containerPort: 8080
           imagePullPolicy: IfNotPresent
