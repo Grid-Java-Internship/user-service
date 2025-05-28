@@ -4,6 +4,8 @@ availableSecrets:
       env: 'GITHUB_USER'
     - versionName: projects/$PROJECT_ID/secrets/github-token/versions/latest
       env: 'GITHUB_TOKEN'
+    - versionName: projects/$PROJECT_ID/secrets/sa-secret/versions/latest
+      env: 'GOOGLE_CREDS'
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -34,6 +36,19 @@ steps:
       - '--region=${_GKE_REGION}'
       - '--project=${PROJECT_ID}'
     id: 'Get GKE Credentials'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        printf "%s" "$$GOOGLE_CREDS" > /workspace/gcp-creds.json
+        kubectl delete secret gcp-secret --namespace=${_K8S_NAMESPACE} --ignore-not-found
+        kubectl create secret generic gcp-secret \
+          --namespace=${_K8S_NAMESPACE} \
+          --from-file=key.json=/workspace/gcp-creds.json
+    secretEnv: ['GOOGLE_CREDS']
+    id: 'Create/Update GKE Secret'
+    waitFor: [ 'Get GKE Credentials' ]
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: kubectl
     args:
