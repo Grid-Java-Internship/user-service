@@ -122,7 +122,7 @@ public class UserServiceImpl implements UserService {
 
         if (!user.getProfilePicturePath().isBlank()) {
 
-            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath().split("/")[4]);
+            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath());
             boolean deleted = storage.delete(blobId);
 
             if (deleted) {
