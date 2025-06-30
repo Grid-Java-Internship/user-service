@@ -85,6 +85,8 @@ security:
       - method: PATCH
         pattern: /v1/users/{id}/addProfilePicture
       - method: DELETE
+        pattern: /v1/users/{id}/deleteProfilePicture
+      - method: DELETE
         pattern: /v1/users/deleteUser/{id}
       - method: POST
         pattern: /v1/users/available
