@@ -122,11 +122,15 @@ public class UserServiceImpl implements UserService {
 
         if (!user.getProfilePicturePath().isBlank()) {
 
-            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath());
+            String pictureName = user.getProfilePicturePath().split("/")[4];
+
+            BlobId blobId = BlobId.of(bucketName, pictureName);
             boolean deleted = storage.delete(blobId);
 
             if (deleted) {
                 log.info("Image deleted for user {}.", user.getId());
+                user.setProfilePicturePath("");
+                userRepository.save(user);
             } else {
                 log.error("Image deletion failed for user {}.", user.getId());
             }
@@ -140,12 +144,12 @@ public class UserServiceImpl implements UserService {
     public ImageDTO getProfilePicture(Long userId) {
         UserResponse user = getUser(userId);
 
-        String pictureName = user.getProfilePicturePath().split("/")[4];
-
-        if (pictureName.isBlank()) {
+        if (!user.getProfilePicturePath().isBlank()) {
             log.info("User {} doesn't have a profile picture.", userId);
             throw new UserNotFoundException("User " + userId + " doesn't have profile picture.");
         }
+
+        String pictureName = user.getProfilePicturePath().split("/")[4];
 
         log.info("Fetching profile picture for user {}.", userId);
 
