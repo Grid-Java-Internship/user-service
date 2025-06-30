@@ -121,6 +121,7 @@ public class UserServiceImpl implements UserService {
     public Boolean deleteProfilePicture(User user) {
 
         if (!user.getProfilePicturePath().isBlank()) {
+
             BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath().split("/")[4]);
             boolean deleted = storage.delete(blobId);
 
@@ -139,7 +140,7 @@ public class UserServiceImpl implements UserService {
     public ImageDTO getProfilePicture(Long userId) {
         UserResponse user = getUser(userId);
 
-        String pictureName = user.getProfilePicturePath();
+        String pictureName = user.getProfilePicturePath().split("/")[4];
 
         if (pictureName.isBlank()) {
             log.info("User {} doesn't have a profile picture.", userId);
