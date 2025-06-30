@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
     public Boolean deleteProfilePicture(User user) {
 
         if (!user.getProfilePicturePath().isBlank()) {
-            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath());
+            BlobId blobId = BlobId.of(bucketName, user.getProfilePicturePath().split("/")[4]);
             boolean deleted = storage.delete(blobId);
 
             if (deleted) {
