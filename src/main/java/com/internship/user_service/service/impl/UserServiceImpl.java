@@ -120,10 +120,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean deleteProfilePicture(User user) {
 
-        if (!user.getProfilePicturePath().isBlank()) {
+        String pictureName = user.getProfilePicturePath();
 
-            String pictureName = user.getProfilePicturePath().split("/")[4];
-
+        if (!pictureName.isBlank()) {
             BlobId blobId = BlobId.of(bucketName, pictureName);
             boolean deleted = storage.delete(blobId);
 
@@ -144,12 +143,12 @@ public class UserServiceImpl implements UserService {
     public ImageDTO getProfilePicture(Long userId) {
         UserResponse user = getUser(userId);
 
-        if (!user.getProfilePicturePath().isBlank()) {
+        String pictureName = user.getProfilePicturePath().split("/")[4];
+
+        if (pictureName.isBlank()) {
             log.info("User {} doesn't have a profile picture.", userId);
             throw new UserNotFoundException("User " + userId + " doesn't have profile picture.");
         }
-
-        String pictureName = user.getProfilePicturePath().split("/")[4];
 
         log.info("Fetching profile picture for user {}.", userId);
 
