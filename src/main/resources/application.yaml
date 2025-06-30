@@ -68,6 +68,8 @@ security:
         pattern: "/swagger-ui/**"
       - method: GET
         pattern: "/v3/api-docs/**"
+      - method: GET
+        pattern: "/v1/users/{id}/getProfilePicture"
     permittedRequestsForUsersOrAdminOrSuperAdmin:
       - method: PUT
         pattern: /v1/preferences
